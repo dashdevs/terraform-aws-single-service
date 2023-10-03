@@ -14,6 +14,6 @@ output "ec2_instance_id" {
   value = module.ec2.ec2_instance_id
 }
 
-output "ec2_public_address" {
-  value = module.ec2.ec2_public_address
+output "ec2_elastic_ip_address" {
+  value = module.ec2.ec2_elastic_ip_address
 }

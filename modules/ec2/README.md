@@ -84,4 +84,4 @@ module "autoscaling_group" {
 | <a name="output_ec2_instance_id"></a> [ec2\_api\_instance\_id](#output\_ec2\_api\_instance\_id) | EC2 Instance identifier|
 | <a name="output_autoscaling_group"></a> [autoscaling\_group](#output\_autoscaling\_group) | Name of an autoscaling group |
 | <a name="output_ec2_instance_name"></a> [ec2\_instance\_name](#output\_ec2\_instance\_name) | Instance identifier set in the "Name" tag|
-| <a name="output_ec2_public_address"></a> [ec2\_public\_address](#output\_ec2\_public\_address) | Public ip address assigned to the EC2 instance |
+| <a name="output_ec2_elastic_ip_address"></a> [ec2\_elastic\_ip\_address](#output\_ec2\_elastic\_ip\_address) | Elastic ip address assigned to the EC2 instance |
