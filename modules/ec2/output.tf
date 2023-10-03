@@ -26,6 +26,6 @@ output "ec2_instance_name" {
   value = local.instance_name_tag
 }
 
-output "ec2_public_address" {
-  value = aws_eip.ec2[0].public_ip
+output "ec2_elastic_ip_address" {
+  value = var.ec2_create_eip ? aws_eip.ec2[0].public_ip : null
 }

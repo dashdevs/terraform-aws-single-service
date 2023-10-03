@@ -91,4 +91,4 @@ module "computing" {
 | <a name="output_ec2_ssh_keypair_value"></a> [ec2\_ssh\_keypair\_value](#output\_ec2\_ssh\_keypair\_value) | The value of the SSH key pair that will be used for EC2 instances |
 | <a name="output_ec2_security_group_id"></a> [ec2\_security\_group\_id](#output\_ec2\_security\_group\_id) | The security group identifier assigned to the EC2 instance |
 | <a name="output_ec2_instance_id"></a> [ec2\_instance\_id](#output\_ec2\_instance\_id) | EC2 Instance identifier |
-| <a name="output_ec2_public_address"></a> [ec2\_public\_address](#output\_ec2\_public\_address) | Public ip address assigned to the EC2 instance |
+| <a name="output_ec2_elastic_ip_address"></a> [ec2\_elastic\_ip\_address](#output\_ec2\_elastic\_ip\_address) | Elastic ip address assigned to the EC2 instance |
