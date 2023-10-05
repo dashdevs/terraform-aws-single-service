@@ -3,6 +3,10 @@ data "aws_caller_identity" "current" {}
 
 locals {
   ports = var.application_ports != null ? "-p ${var.application_ports}" : null
+  env_vars_list = [
+    for env_var in var.application_env_vars : "-e ${env_var.name}=${env_var.value}"
+  ]
+  env_vars = length(var.application_env_vars) > 0 ? join(" ", locals.env_vars_list) : null
 }
 
 resource "aws_ssm_document" "docker" {
@@ -21,6 +25,12 @@ parameters:
   ports:
     type: String
     default: "${local.ports}"
+  env_vars:
+    type: String
+    default: "${local.env_vars}"
+  start_command:
+    type: String
+    default: "${var.application_start_command}"
 mainSteps:
   - action: 'aws:runShellScript'
     name: deployApplication
@@ -34,7 +44,7 @@ mainSteps:
         if [ ! -z $CURRENT_CONTAINER ]; then docker rm -f $CURRENT_CONTAINER; fi
         sudo docker image prune -a --force
         sudo docker image pull $DOCKER_IMAGE:latest
-        sudo docker run --restart unless-stopped -d {{ports}} --name {{app}} $DOCKER_IMAGE:latest
+        sudo docker run --restart unless-stopped -d {{ports}} {{env_vars}} --name {{app}} $DOCKER_IMAGE:latest {{start_command}}
 DOC
 }
 
