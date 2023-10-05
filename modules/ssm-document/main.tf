@@ -3,10 +3,12 @@ data "aws_caller_identity" "current" {}
 
 locals {
   ports = var.application_ports != null ? "-p ${var.application_ports}" : null
-  env_vars_list = [
-    for env_var in var.application_env_vars : "-e ${env_var.name}=${env_var.value}"
-  ]
-  env_vars = length(var.application_env_vars) > 0 ? join(" ", locals.env_vars_list) : null
+  env_vars = length(var.application_env_vars) != 0 ? join(
+    " ",
+    [
+      for env_var in var.application_env_vars : "-e ${env_var.name}=${env_var.value}"
+    ]
+  ) : null
 }
 
 resource "aws_ssm_document" "docker" {
