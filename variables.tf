@@ -61,11 +61,11 @@ variable "ec2_ingress_ports" {
 }
 
 variable "applications_config" {
-  type = list(object({
+  type = set(object({
     application_name          = string
     application_ports         = string
     application_start_command = string
-    application_env_vars = list(object({
+    application_env_vars = set(object({
       name  = string
       value = string
     }))

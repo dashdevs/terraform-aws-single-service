@@ -31,9 +31,17 @@ variable "application_start_command" {
 }
 
 variable "application_env_vars" {
-  type = list(object({
+  type = set(object({
     name  = string
     value = string
   }))
   default = []
 }
+
+# variable "application_env_vars" {
+#   type = list(object({
+#     name  = string
+#     value = string
+#   }))
+#   default = []
+# }
