@@ -2,13 +2,14 @@ data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
 
 locals {
-  ports = var.application_ports != null ? "-p ${var.application_ports}" : null
+  ports                     = var.application_ports != null ? "-p ${var.application_ports}" : ""
+  application_start_command = var.application_start_command != null ? var.application_start_command : ""
   env_vars = length(var.application_env_vars) != 0 ? join(
     " ",
     [
       for env_var in var.application_env_vars : "-e ${env_var.name}=${env_var.value}"
     ]
-  ) : null
+  ) : ""
 }
 
 resource "aws_ssm_document" "docker" {
@@ -32,7 +33,7 @@ parameters:
     default: "${local.env_vars}"
   start_command:
     type: String
-    default: "${var.application_start_command}"
+    default: "${local.application_start_command}"
 mainSteps:
   - action: 'aws:runShellScript'
     name: deployApplication
