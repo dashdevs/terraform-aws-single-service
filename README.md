@@ -42,6 +42,13 @@ module "computing" {
   applications_config = [{
     application_name  = var.application_name
     application_ports = "80:8080"
+    application_start_command = null
+    application_env_vars = [
+      {
+        name = "example_var_name"
+        value = "example_var_value"
+      }
+    ]
   }]
 }
 ```

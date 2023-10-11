@@ -20,6 +20,12 @@ module "ssm-document" {
   repository_name   = var.ecr_name
   application_name  = var.application_name
   application_ports = var.application_ports
+  application_env_vars = [
+    {
+      name = "example_var_name"
+      value = "example_var_value"
+    }
+  ]
 }
 
 ```
