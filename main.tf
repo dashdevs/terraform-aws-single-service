@@ -28,12 +28,14 @@ module "ec2" {
 }
 
 module "deployment" {
-  count             = length(module.ecr.repository_names)
-  source            = "./modules/ssm-document"
-  name              = var.name
-  autoscaling_group = module.ec2.autoscaling_group
-  instance_name     = module.ec2.ec2_instance_name
-  repository_name   = module.ecr.repository_names[count.index]
-  application_name  = var.applications_config[count.index].application_name
-  application_ports = var.applications_config[count.index].application_ports
+  count                     = length(module.ecr.repository_names)
+  source                    = "./modules/ssm-document"
+  name                      = var.name
+  autoscaling_group         = module.ec2.autoscaling_group
+  instance_name             = module.ec2.ec2_instance_name
+  repository_name           = module.ecr.repository_names[count.index]
+  application_name          = var.applications_config[count.index].application_name
+  application_ports         = var.applications_config[count.index].application_ports
+  application_start_command = var.applications_config[count.index].application_start_command
+  application_env_vars      = var.applications_config[count.index].application_env_vars
 }
