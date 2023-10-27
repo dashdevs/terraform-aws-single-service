@@ -1,9 +1,19 @@
 data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
 
+check "application_repository_validation" {
+  assert {
+    condition     = !((var.application_external_docker_image != null > 1 && var.repository_name != null) || (var.application_external_docker_image == null > 1 && var.repository_name == null))
+    error_message = "Must be set to 1 of application_external_docker_image or repository_name variables"
+  }
+}
+
 locals {
-  ports                     = var.application_ports != null ? "-p ${var.application_ports}" : ""
-  application_start_command = var.application_start_command != null ? var.application_start_command : ""
+  ports                          = var.application_ports != null ? "-p ${var.application_ports}" : ""
+  application_start_command      = var.application_start_command != null ? var.application_start_command : ""
+  export_registry_address_string = var.application_external_docker_image == null ? "export REGISTRY=${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com" : ""
+  login_aws_docker_registry      = var.application_external_docker_image == null ? "aws ecr get-login-password --region ${data.aws_region.current.name} | sudo docker login --username AWS --password-stdin $REGISTRY" : ""
+  export_docker_image            = var.application_external_docker_image == null ? "DOCKER_IMAGE=$REGISTRY/${var.repository_name}" : "DOCKER_IMAGE=${var.application_external_docker_image}"
   env_vars = length(var.application_env_vars) != 0 ? join(
     " ",
     [
@@ -40,9 +50,9 @@ mainSteps:
     inputs:
       runCommand:
       - |
-        export REGISTRY=${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com
-        aws ecr get-login-password --region ${data.aws_region.current.name} | sudo docker login --username AWS --password-stdin $REGISTRY
-        DOCKER_IMAGE=$REGISTRY/${var.repository_name}
+        ${local.export_registry_address_string}
+        ${local.login_aws_docker_registry}
+        ${local.export_docker_image}
         CURRENT_CONTAINER=$(docker ps -aql --filter ancestor=$DOCKER_IMAGE:latest --format='{{.ID}}')
         if [ ! -z $CURRENT_CONTAINER ]; then docker rm -f $CURRENT_CONTAINER; fi
         sudo docker image prune -a --force
