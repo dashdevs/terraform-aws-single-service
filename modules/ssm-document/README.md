@@ -57,7 +57,7 @@ module "ssm-document" {
 | <a name="input_application_name"></a> [application\_name](#input\_application\_name) | Application name in the ssm document | `string` | `core` | no |
 | <a name="input_application_start_command"></a> [application\_start\_command](#input\_application\_start\_coommand) | Application Docker endpoint in the ssm document | `string` | `null` | no |
 | <a name="input_application_env_vars"></a> [application\_env\_vars](#input\_application\_env\_vars) | List of map of the application environment variables in the ssm document. Wher `name` it is the variable name and `value` it is the variable value | `list(object{name = string, value = string})` | `[]` | no |
-| <a name="input_application_external_docker_image"></a> [application\_external\_docker\_image](#input\_application\_external\_docker\_image) | The docker image name from external docker repository | `string` |`null`| no |
+| <a name="input_application_external_docker_image"></a> [application\_external\_docker\_image](#input\_application\_external\_docker\_image) | The docker image name from external docker repository. Can't be set if [autoscaling\_group](#input\_autoscaling\_group) is not `null` | `string` |`null`| no |
 
 ## Outputs
 
