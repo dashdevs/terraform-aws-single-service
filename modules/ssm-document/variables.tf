@@ -24,3 +24,16 @@ variable "application_name" {
   type    = string
   default = "core"
 }
+
+variable "application_start_command" {
+  type    = string
+  default = null
+}
+
+variable "application_env_vars" {
+  type = list(object({
+    name  = string
+    value = string
+  }))
+  default = []
+}
