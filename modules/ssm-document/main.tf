@@ -28,10 +28,10 @@ parameters:
   ports:
     type: String
     default: "${local.ports}"
-  env_vars:
+  envVars:
     type: String
     default: "${local.env_vars}"
-  start_command:
+  startCommand:
     type: String
     default: "${local.application_start_command}"
 mainSteps:
@@ -47,7 +47,7 @@ mainSteps:
         if [ ! -z $CURRENT_CONTAINER ]; then docker rm -f $CURRENT_CONTAINER; fi
         sudo docker image prune -a --force
         sudo docker image pull $DOCKER_IMAGE:latest
-        sudo docker run --restart unless-stopped -d {{ports}} {{env_vars}} --name {{app}} $DOCKER_IMAGE:latest {{start_command}}
+        sudo docker run --restart unless-stopped -d {{ports}} {{envVars}} --name {{app}} $DOCKER_IMAGE:latest {{startCommand}}
 DOC
 }
 
