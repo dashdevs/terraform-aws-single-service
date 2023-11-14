@@ -65,6 +65,7 @@ module "autoscaling_group" {
 | <a name="input_ec2_instance_type"></a> [ec2\_instance\_type](#input\_ec2\_instance\_type) | Type of an EC2 instances | `string` |`t2.micro`| no |
 | <a name="input_ec2_instance_count_min"></a> [ec2\_instance\_count\_min](#input\_ec2\_instance\_count\_min) | Minimum number of EC2 instances that should be provisioned if `create_autoscaling` is true | `number` |`1`| no |
 | <a name="input_ec2_instance_count_max"></a> [ec2\_instance\_count\_max](#input\_ec2\_instance\_count\_max) | Maximum number of EC2 instances that should be provisioned if `create_autoscaling` is true | `number` |`1`| no |
+| <a name="input_ec2_root_storage_size"></a> [ec2\_root\_storage\_size](#input\_ec2\_root\_storage\_size) | Size of the root volume attached to EC2 instances in gigabytes | `number` |`8`| no |
 | <a name="input_attach_ecr_based_deployment_policy"></a> [attach\_ecr\_based\_deployment\_policy](#input\_attach\_ecr\_based\_deployment\_policy) | If `true`, will attach ecr based deployment policy to EC2 instances | `bool` |`true`| no |
 | <a name="input_iam_role_additional_policies"></a> [iam\_role\_additional\_policies](#input\_iam\_role\_additional\_policies) | List of additional IAM policy for attach to EC2 instances | `list(string)` |`[]`| no |
 | <a name="input_create_autoscaling"></a> [create\_autoscaling](#input\_create\_autoscaling) | Used to create autoscaling group. If `true`, will create autoscaling group | `bool` |`false`| no |
