@@ -84,9 +84,13 @@ resource "aws_instance" "ec2" {
   vpc_security_group_ids      = [aws_security_group.ec2.id]
   user_data                   = file("${path.module}/docker.tftpl")
   user_data_replace_on_change = true
-  
+
   tags = {
     Name = local.instance_name_tag
+  }
+
+  root_block_device {
+    volume_size = var.ec2_root_storage_size
   }
 
   lifecycle {
@@ -103,6 +107,10 @@ resource "aws_launch_configuration" "core_conf" {
   key_name             = aws_key_pair.ec2.key_name
   security_groups      = [aws_security_group.ec2.id]
   user_data            = file("${path.module}/docker.tftpl")
+
+  root_block_device {
+    volume_size = var.ec2_root_storage_size
+  }
 
   lifecycle {
     create_before_destroy = true
