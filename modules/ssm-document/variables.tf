@@ -12,7 +12,8 @@ variable "instance_name" {
 }
 
 variable "repository_name" {
-  type = string
+  type    = string
+  default = null
 }
 
 variable "application_ports" {
@@ -36,4 +37,9 @@ variable "application_env_vars" {
     value = string
   }))
   default = []
+}
+
+variable "application_external_docker_image" {
+  type    = string
+  default = null
 }

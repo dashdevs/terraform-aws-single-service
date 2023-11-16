@@ -1,9 +1,24 @@
 data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
 
+check "application_repository_validation" {
+  assert {
+    condition     = !((var.application_external_docker_image != null && var.repository_name != null) || (var.application_external_docker_image == null && var.repository_name == null))
+    error_message = "Must be set to 1 of application_external_docker_image or repository_name variables"
+  }
+
+  assert {
+    condition     = !(var.application_external_docker_image != null && var.autoscaling_group != null)
+    error_message = "application_external_docker_image can't be set with autoscaling_group not null"
+  }
+}
+
 locals {
-  ports                     = var.application_ports != null ? "-p ${var.application_ports}" : ""
-  application_start_command = var.application_start_command != null ? var.application_start_command : ""
+  ports                          = var.application_ports != null ? "-p ${var.application_ports}" : ""
+  application_start_command      = var.application_start_command != null ? var.application_start_command : ""
+  export_registry_address_string = var.application_external_docker_image == null ? "export REGISTRY=${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com" : ""
+  login_aws_docker_registry      = var.application_external_docker_image == null ? "aws ecr get-login-password --region ${data.aws_region.current.name} | sudo docker login --username AWS --password-stdin $REGISTRY" : ""
+  export_docker_image            = var.application_external_docker_image == null ? "DOCKER_IMAGE=$REGISTRY/${var.repository_name}" : "DOCKER_IMAGE=${var.application_external_docker_image}"
   env_vars = length(var.application_env_vars) != 0 ? join(
     " ",
     [
@@ -40,9 +55,9 @@ mainSteps:
     inputs:
       runCommand:
       - |
-        export REGISTRY=${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com
-        aws ecr get-login-password --region ${data.aws_region.current.name} | sudo docker login --username AWS --password-stdin $REGISTRY
-        DOCKER_IMAGE=$REGISTRY/${var.repository_name}
+        ${local.export_registry_address_string}
+        ${local.login_aws_docker_registry}
+        ${local.export_docker_image}
         CURRENT_CONTAINER=$(docker ps -aql --filter ancestor=$DOCKER_IMAGE:latest --format='{{.ID}}')
         if [ ! -z $CURRENT_CONTAINER ]; then docker rm -f $CURRENT_CONTAINER; fi
         sudo docker image prune -a --force
@@ -52,6 +67,7 @@ DOC
 }
 
 resource "aws_cloudwatch_event_rule" "ecr_image_action" {
+  count       = var.application_external_docker_image != null ? 0 : 1
   name        = "${var.name}-${var.application_name}-pull-image-from-ECR"
   description = "Rule to run ssm command on Linux server - pull image from ECR"
 
@@ -85,6 +101,7 @@ resource "aws_cloudwatch_event_rule" "instance_start_action" {
 }
 
 resource "aws_cloudwatch_event_target" "ecr_push_target" {
+  count     = var.application_external_docker_image != null ? 0 : 1
   target_id = "${var.name}-${var.application_name}-ecr-push"
   rule      = aws_cloudwatch_event_rule.ecr_image_action.name
   arn       = aws_ssm_document.docker.arn
@@ -110,6 +127,7 @@ resource "aws_cloudwatch_event_target" "start_instance_target" {
 }
 
 data "aws_iam_policy_document" "ssm_lifecycle_trust" {
+  count = var.application_external_docker_image != null ? 0 : 1
   statement {
     actions = ["sts:AssumeRole"]
 
@@ -121,6 +139,7 @@ data "aws_iam_policy_document" "ssm_lifecycle_trust" {
 }
 
 data "aws_iam_policy_document" "ssm_lifecycle" {
+  count = var.application_external_docker_image != null ? 0 : 1
   statement {
     effect    = "Allow"
     actions   = ["ssm:SendCommand"]
@@ -141,16 +160,29 @@ data "aws_iam_policy_document" "ssm_lifecycle" {
 }
 
 resource "aws_iam_role" "ssm_lifecycle" {
+  count              = var.application_external_docker_image != null ? 0 : 1
   name               = "${var.name}-${var.application_name}-SSMLifecycle"
   assume_role_policy = data.aws_iam_policy_document.ssm_lifecycle_trust.json
 }
 
 resource "aws_iam_policy" "ssm_lifecycle" {
+  count  = var.application_external_docker_image != null ? 0 : 1
   name   = "${var.name}-${var.application_name}-SSMLifecycle"
   policy = data.aws_iam_policy_document.ssm_lifecycle.json
 }
 
 resource "aws_iam_role_policy_attachment" "ssm_lifecycle" {
+  count      = var.application_external_docker_image != null ? 0 : 1
   policy_arn = aws_iam_policy.ssm_lifecycle.arn
   role       = aws_iam_role.ssm_lifecycle.name
+}
+
+resource "aws_ssm_association" "docker" {
+  count = var.application_external_docker_image != null ? 1 : 0
+  name  = aws_ssm_document.docker.name
+
+  targets {
+    key    = "tag:Name"
+    values = ["${var.instance_name}"]
+  }
 }
