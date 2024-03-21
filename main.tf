@@ -2,6 +2,7 @@ locals {
   application_names = [
     for config in var.applications_config : config.application_name
   ]
+  ssm_document_name = "${var.name}-${var.applications_config[count.index].application_name}-ssm-delivery-script"
 }
 
 module "ecr" {
@@ -25,6 +26,7 @@ module "ec2" {
   target_group_arns                  = var.target_group_arns
   ec2_instance_name_postfix          = var.ec2_instance_name_postfix
   ec2_ingress_ports                  = var.ec2_ingress_ports
+  ssm_document_name                  = local.ssm_document_name
 }
 
 module "deployment" {
@@ -38,4 +40,5 @@ module "deployment" {
   application_ports         = var.applications_config[count.index].application_ports
   application_start_command = var.applications_config[count.index].application_start_command
   application_env_vars      = var.applications_config[count.index].application_env_vars
+  ssm_document_name         = local.ssm_document_name
 }

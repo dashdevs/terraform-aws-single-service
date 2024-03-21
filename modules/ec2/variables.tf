@@ -64,3 +64,7 @@ variable "ec2_ingress_ports" {
   type    = list(string)
   default = ["80", "22"]
 }
+
+variable "ssm_document_name" {
+  type = string
+}

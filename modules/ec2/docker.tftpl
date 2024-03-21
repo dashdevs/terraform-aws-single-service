@@ -8,4 +8,5 @@ sudo chkconfig docker on
 #Install SSM agent
 sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
 sudo systemctl start amazon-ssm-agent
-sudo reboot
+export INSTANCE_ID=$(ec2-metadata --instance-id | cut -d " " -f 2)
+aws ssm send-command --region ${region} --instance-ids $INSTANCE_ID --document-name ${ssm_document_name}

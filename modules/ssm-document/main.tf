@@ -13,7 +13,7 @@ locals {
 }
 
 resource "aws_ssm_document" "docker" {
-  name            = "${var.name}-${var.application_name}-ssm-delivery-script"
+  name            = var.ssm_document_name
   document_format = "YAML"
   document_type   = "Command"
   target_type     = "/AWS::EC2::Instance"

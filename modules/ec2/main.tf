@@ -1,4 +1,5 @@
 data "aws_default_tags" "current" {}
+data "aws_region" "current" {}
 
 locals {
   instance_name_tag = "${var.name}-${var.ec2_instance_name_postfix}"
@@ -82,7 +83,10 @@ resource "aws_instance" "ec2" {
   key_name                    = aws_key_pair.ec2.key_name
   subnet_id                   = var.ec2_subnets[0]
   vpc_security_group_ids      = [aws_security_group.ec2.id]
-  user_data                   = file("${path.module}/docker.tftpl")
+  user_data = templatefile("${path.module}/docker.tftpl", {
+    region            = data.aws_region.current.name
+    ssm_document_name = var.ssm_document_name
+  })
   user_data_replace_on_change = true
 
   tags = {
@@ -144,6 +148,58 @@ resource "aws_autoscaling_group" "ec2" {
   lifecycle {
     create_before_destroy = true
   }
+}
+
+resource "aws_cloudwatch_metric_alarm" "scaling_up" {
+  actions_enabled     = true
+  alarm_actions       = [aws_sns_topic.event.arn, aws_autoscaling_policy.policy_up.arn]
+  alarm_description   = "This metric monitors EC2 CPU utilization > 90%"
+  alarm_name          = "${var.name}-EC2-CPU-scale-up-alert"
+  comparison_operator = "GreaterThanThreshold"
+  datapoints_to_alarm = 1
+  dimensions = {
+    "AutoScalingGroupName" = aws_autoscaling_group.ec2[0].id
+  }
+  evaluation_periods = 1
+  metric_name        = "CPUUtilization"
+  namespace          = "AWS/EC2"
+  period             = 90
+  statistic          = "Maximum"
+  threshold          = 50
+}
+
+resource "aws_cloudwatch_metric_alarm" "scaling_down" {
+  actions_enabled     = true
+  alarm_actions       = [aws_sns_topic.event.arn, aws_autoscaling_policy.policy_down.arn]
+  alarm_description   = "This metric monitors EC2 CPU utilization < 10%"
+  alarm_name          = "${var.name}-EC2-CPU-scale-down-alert"
+  comparison_operator = "LessThanOrEqualToThreshold"
+  datapoints_to_alarm = 1
+  dimensions = {
+    "AutoScalingGroupName" = aws_autoscaling_group.ec2[0].id
+  }
+  evaluation_periods = 1
+  metric_name        = "CPUUtilization"
+  namespace          = "AWS/EC2"
+  period             = 300
+  statistic          = "Maximum"
+  threshold          = 10
+}
+
+resource "aws_autoscaling_policy" "policy_up" {
+  autoscaling_group_name = aws_autoscaling_group.ec2[0].id
+  name                   = "${var.name}-autoscaling-policy-up"
+  adjustment_type        = "ChangeInCapacity"
+  scaling_adjustment     = 1
+  cooldown               = 300
+}
+
+resource "aws_autoscaling_policy" "policy_down" {
+  autoscaling_group_name = aws_autoscaling_group.ec2[0].id
+  name                   = "${var.name}-autoscaling-policy-down"
+  adjustment_type        = "ChangeInCapacity"
+  scaling_adjustment     = -1
+  cooldown               = 300
 }
 
 resource "aws_eip" "ec2" {

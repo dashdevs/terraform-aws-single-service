@@ -37,3 +37,7 @@ variable "application_env_vars" {
   }))
   default = []
 }
+
+variable "ssm_document_name" {
+  type = string
+}
