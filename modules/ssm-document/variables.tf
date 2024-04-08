@@ -37,3 +37,8 @@ variable "application_env_vars" {
   }))
   default = []
 }
+
+variable "application_volumes" {
+  type    = list(string)
+  default = null
+}

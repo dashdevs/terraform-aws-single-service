@@ -10,6 +10,12 @@ locals {
       for env_var in var.application_env_vars : "-e ${env_var.name}=${env_var.value}"
     ]
   ) : ""
+  volumes = length(var.application_volumes) != null ? join(
+    " ",
+    [
+      for volume in var.application_volumes : "-v ${volume}"
+    ]
+  ) : ""
 }
 
 resource "aws_ssm_document" "docker" {
@@ -31,6 +37,9 @@ parameters:
   envVars:
     type: String
     default: "${local.env_vars}"
+  volumes:
+    type: String
+    default: "${local.volumes}"
   startCommand:
     type: String
     default: "${local.application_start_command}"
@@ -47,7 +56,7 @@ mainSteps:
         if [ ! -z $CURRENT_CONTAINER ]; then docker rm -f $CURRENT_CONTAINER; fi
         sudo docker image prune -a --force
         sudo docker image pull $DOCKER_IMAGE:latest
-        sudo docker run --restart unless-stopped -d {{ports}} {{envVars}} --name {{app}} $DOCKER_IMAGE:latest {{startCommand}}
+        sudo docker run --restart unless-stopped -d {{ports}} {{envVars}} {{volumes}} --name {{app}} $DOCKER_IMAGE:latest {{startCommand}}
 DOC
 }
 
