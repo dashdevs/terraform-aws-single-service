@@ -90,7 +90,8 @@ resource "aws_instance" "ec2" {
   }
 
   root_block_device {
-    volume_size = var.ec2_root_storage_size
+    volume_size           = var.ec2_root_storage_size
+    delete_on_termination = var.volume_delete_on_termination
   }
 
   lifecycle {

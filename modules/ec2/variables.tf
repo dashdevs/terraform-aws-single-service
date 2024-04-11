@@ -64,3 +64,8 @@ variable "ec2_ingress_ports" {
   type    = list(string)
   default = ["80", "22"]
 }
+
+variable "volume_delete_on_termination" {
+  type    = bool
+  default = true
+}
