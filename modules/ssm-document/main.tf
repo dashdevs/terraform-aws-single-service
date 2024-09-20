@@ -1,58 +1,8 @@
 data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
 
-locals {
-  ports                     = var.application_ports != null ? "-p ${var.application_ports}" : ""
-  application_start_command = var.application_start_command != null ? var.application_start_command : ""
-  env_vars = length(var.application_env_vars) != 0 ? join(
-    " ",
-    [
-      for env_var in var.application_env_vars : "-e ${env_var.name}=${env_var.value}"
-    ]
-  ) : ""
-}
-
-resource "aws_ssm_document" "docker" {
-  name            = "${var.name}-${var.application_name}-ssm-delivery-script"
-  document_format = "YAML"
-  document_type   = "Command"
-  target_type     = "/AWS::EC2::Instance"
-
-  content = <<DOC
-schemaVersion: '2.2'
-description: Delivery Script
-parameters:
-  app:
-    type: String
-    default: "${var.application_name}"
-  ports:
-    type: String
-    default: "${local.ports}"
-  envVars:
-    type: String
-    default: "${local.env_vars}"
-  startCommand:
-    type: String
-    default: "${local.application_start_command}"
-mainSteps:
-  - action: 'aws:runShellScript'
-    name: deployApplication
-    inputs:
-      runCommand:
-      - |
-        export REGISTRY=${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com
-        aws ecr get-login-password --region ${data.aws_region.current.name} | sudo docker login --username AWS --password-stdin $REGISTRY
-        DOCKER_IMAGE=$REGISTRY/${var.repository_name}
-        CURRENT_CONTAINER=$(docker ps -aql --filter ancestor=$DOCKER_IMAGE:latest --format='{{.ID}}')
-        if [ ! -z $CURRENT_CONTAINER ]; then docker rm -f $CURRENT_CONTAINER; fi
-        sudo docker image prune -a --force
-        sudo docker image pull $DOCKER_IMAGE:latest
-        sudo docker run --restart unless-stopped -d {{ports}} {{envVars}} --name {{app}} $DOCKER_IMAGE:latest {{startCommand}}
-DOC
-}
-
 resource "aws_cloudwatch_event_rule" "ecr_image_action" {
-  name        = "${var.name}-${var.application_name}-pull-image-from-ECR"
+  name        = "${var.name}-pull-image-from-ECR"
   description = "Rule to run ssm command on Linux server - pull image from ECR"
 
   event_pattern = jsonencode({
@@ -71,7 +21,7 @@ resource "aws_cloudwatch_event_rule" "ecr_image_action" {
 
 resource "aws_cloudwatch_event_rule" "instance_start_action" {
   count       = var.autoscaling_group != null ? 1 : 0
-  name        = "${var.name}-${var.application_name}-start-autoscale-instance"
+  name        = "${var.name}-start-autoscale-instance"
   description = "Rule to run ssm command on Linux server - start autoscale instance"
 
   event_pattern = jsonencode({
@@ -85,9 +35,9 @@ resource "aws_cloudwatch_event_rule" "instance_start_action" {
 }
 
 resource "aws_cloudwatch_event_target" "ecr_push_target" {
-  target_id = "${var.name}-${var.application_name}-ecr-push"
+  target_id = "${var.name}-ecr-push"
   rule      = aws_cloudwatch_event_rule.ecr_image_action.name
-  arn       = aws_ssm_document.docker.arn
+  arn       = var.deployment_document
   role_arn  = aws_iam_role.ssm_lifecycle.arn
 
   run_command_targets {
@@ -98,9 +48,9 @@ resource "aws_cloudwatch_event_target" "ecr_push_target" {
 
 resource "aws_cloudwatch_event_target" "start_instance_target" {
   count     = var.autoscaling_group != null ? 1 : 0
-  target_id = "${var.name}-${var.application_name}-start-instance"
+  target_id = "${var.name}-start-instance"
   rule      = aws_cloudwatch_event_rule.instance_start_action[0].name
-  arn       = aws_ssm_document.docker.arn
+  arn       = var.deployment_document
   role_arn  = aws_iam_role.ssm_lifecycle.arn
 
   run_command_targets {
@@ -136,17 +86,17 @@ data "aws_iam_policy_document" "ssm_lifecycle" {
   statement {
     effect    = "Allow"
     actions   = ["ssm:SendCommand"]
-    resources = [aws_ssm_document.docker.arn]
+    resources = [var.deployment_document]
   }
 }
 
 resource "aws_iam_role" "ssm_lifecycle" {
-  name               = "${var.name}-${var.application_name}-SSMLifecycle"
+  name               = "${var.name}-SSMLifecycle"
   assume_role_policy = data.aws_iam_policy_document.ssm_lifecycle_trust.json
 }
 
 resource "aws_iam_policy" "ssm_lifecycle" {
-  name   = "${var.name}-${var.application_name}-SSMLifecycle"
+  name   = "${var.name}-SSMLifecycle"
   policy = data.aws_iam_policy_document.ssm_lifecycle.json
 }
 
