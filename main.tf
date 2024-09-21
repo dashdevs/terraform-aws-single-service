@@ -1,13 +1,7 @@
-locals {
-  application_names = [
-    for config in var.applications_config : config.application_name
-  ]
-}
-
 module "ecr" {
   source            = "./modules/ecr"
   name              = var.name
-  application_names = local.application_names
+  application_names = keys(var.applications_config)
 }
 
 module "ec2" {
@@ -28,22 +22,22 @@ module "ec2" {
 }
 
 module "deployments" {
-  count             = length(module.ecr.repository_names)
+  for_each          = module.ecr.application_repository_names
   source            = "./modules/deployment"
   name              = var.name
-  image_name        = module.ecr.repository_names[count.index]
-  application_name  = var.applications_config[count.index].application_name
-  application_ports = var.applications_config[count.index].application_ports
-  application_cmd   = var.applications_config[count.index].application_start_command
-  application_env   = var.applications_config[count.index].application_env_vars
+  image_name        = each.value
+  application_name  = each.key
+  application_ports = var.applications_config[each.key].ports
+  application_env   = var.applications_config[each.key].env
+  application_cmd   = var.applications_config[each.key].cmd
 }
 
 module "deployment_triggers" {
-  count               = length(module.ecr.repository_names)
+  for_each            = module.ecr.application_repository_names
   source              = "./modules/ssm-document"
-  name                = "${var.name}-${var.applications_config[count.index].application_name}"
+  name                = "${var.name}-${each.key}"
   autoscaling_group   = module.ec2.autoscaling_group
   instance_name       = module.ec2.ec2_instance_name
-  repository_name     = module.ecr.repository_names[count.index]
-  deployment_document = module.deployment[count.index].ssm_document_arn
+  repository_name     = each.value
+  deployment_document = module.deployments[each.key].ssm_document_arn
 }

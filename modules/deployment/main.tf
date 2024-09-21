@@ -22,7 +22,7 @@ locals {
   )
 
   docker_ports = var.application_ports == "" ? "" : "-p ${var.application_ports}"
-  docker_env   = join(" ", [for env_var in var.application_env : "-e ${env_var.name}=${env_var.value}"])
+  docker_env   = join(" ", [for name, value in var.application_env : "-e ${name}=${value}"])
   docker_cmd   = var.application_cmd == null ? "" : var.application_cmd
 }
 

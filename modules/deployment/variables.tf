@@ -17,11 +17,8 @@ variable "application_ports" {
 }
 
 variable "application_env" {
-  type = list(object({
-    name  = string
-    value = string
-  }))
-  default = []
+  type    = map(string)
+  default = {}
 }
 
 variable "application_cmd" {

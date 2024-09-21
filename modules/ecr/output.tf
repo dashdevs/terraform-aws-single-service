@@ -1,5 +1,5 @@
-output "repository_names" {
-  value = [
-    for ecr in aws_ecr_repository.ecr : ecr.name
-  ]
+output "application_repository_names" {
+  value = {
+    for application_name, repository in aws_ecr_repository.ecr : application_name => repository.name
+  }
 }
