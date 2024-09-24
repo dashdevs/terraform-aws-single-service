@@ -82,8 +82,6 @@ resource "aws_instance" "ec2" {
   key_name                    = aws_key_pair.ec2.key_name
   subnet_id                   = var.ec2_subnets[0]
   vpc_security_group_ids      = [aws_security_group.ec2.id]
-  user_data                   = file("${path.module}/docker.tftpl")
-  user_data_replace_on_change = true
 
   tags = {
     Name = local.instance_name_tag
@@ -106,7 +104,6 @@ resource "aws_launch_configuration" "core_conf" {
   instance_type        = var.ec2_instance_type
   key_name             = aws_key_pair.ec2.key_name
   security_groups      = [aws_security_group.ec2.id]
-  user_data            = file("${path.module}/docker.tftpl")
 
   root_block_device {
     volume_size = var.ec2_root_storage_size
@@ -171,6 +168,14 @@ resource "aws_security_group" "ec2" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_ssm_association" "ec2_config" {
+  name = "AWS-UpdateSSMAgent"
+  targets {
+    key    = "tag:Name"
+    values = [local.instance_name_tag]
   }
 }
 

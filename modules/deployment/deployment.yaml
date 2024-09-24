@@ -14,14 +14,26 @@ parameters:
     type: String
     default: "${cmd}"
 mainSteps:
+  - action: "aws:configureDocker"
+    name: installDocker
+    inputs:
+      action: Install
+      onFailure: exit
   - action: "aws:runShellScript"
-    name: deployApplication
+    name: configureDocker
+    inputs:
+      runCommand:
+        - usermod -a -G docker ec2-user
+        - chkconfig docker on
+      onFailure: exit
+  - action: "aws:runShellScript"
+    name: rolloutApplication
     inputs:
       runCommand:
         - |
           ${login_command}
           CURRENT_CONTAINER=$(docker ps -aql --filter ancestor=${image}:latest --format='{{.ID}}')
           if [ ! -z $CURRENT_CONTAINER ]; then docker rm -f $CURRENT_CONTAINER; fi
-          sudo docker image prune -a --force
-          sudo docker image pull ${image}:latest
-          sudo docker run --restart unless-stopped -d {{ports}} {{env}} --name {{name}} ${image}:latest {{cmd}}
+          docker image prune -a --force
+          docker image pull ${image}:latest
+          docker run --restart unless-stopped -d {{ports}} {{env}} --name {{name}} ${image}:latest {{cmd}}
