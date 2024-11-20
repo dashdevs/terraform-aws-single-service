@@ -37,8 +37,7 @@ mainSteps:
       runCommand:
         - |
           ${login_command}
-          CURRENT_CONTAINER=$(docker ps -al --filter ancestor=${image}:latest --format='{{.ID}}')
-          if [ ! -z $CURRENT_CONTAINER ]; then docker rm -f $CURRENT_CONTAINER; fi
+          docker rm -f {{name}} 2>/dev/null || true
           docker image prune -a --force
           docker image pull ${image}:latest
           docker run --restart unless-stopped -d {{ports}} {{env}} --name {{name}} ${image}:latest {{cmd}}
