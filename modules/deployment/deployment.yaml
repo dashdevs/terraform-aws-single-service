@@ -14,25 +14,30 @@ parameters:
     type: String
     default: "${cmd}"
 mainSteps:
-  - action: "aws:configureDocker"
-    name: installDocker
-    inputs:
-      action: Install
-      onFailure: exit
-  - action: "aws:runShellScript"
-    name: configureDocker
+  - action: aws:runShellScript
+    name: checkDockerInstallation
     inputs:
       runCommand:
-        - usermod -a -G docker ec2-user
-        - chkconfig docker on
+        - |
+          MAX_RETRIES=5
+          RETRY_COUNT=0
+          while [[ $(systemctl is-active docker) != "active" ]]; do
+            if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
+              echo "Docker is not active after $MAX_RETRIES retries. Exiting."
+              exit 1
+            fi
+            echo "Docker is not active. Retry #$((++RETRY_COUNT))..."
+            sleep 10
+          done
+          docker --version
       onFailure: exit
-  - action: "aws:runShellScript"
+  - action: aws:runShellScript
     name: rolloutApplication
     inputs:
       runCommand:
         - |
           ${login_command}
-          CURRENT_CONTAINER=$(docker ps -aql --filter ancestor=${image}:latest --format='{{.ID}}')
+          CURRENT_CONTAINER=$(docker ps -al --filter ancestor=${image}:latest --format='{{.ID}}')
           if [ ! -z $CURRENT_CONTAINER ]; then docker rm -f $CURRENT_CONTAINER; fi
           docker image prune -a --force
           docker image pull ${image}:latest

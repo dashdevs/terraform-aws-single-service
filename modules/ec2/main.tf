@@ -25,27 +25,6 @@ data "aws_ami" "amazon-linux-2" {
   }
 }
 
-check "eip_validation" {
-  assert {
-    condition     = !(var.ec2_create_eip && var.create_autoscaling)
-    error_message = "ec2_create_eip can't be set true with create_autoscaling = true"
-  }
-}
-
-check "instance_max_count_validation" {
-  assert {
-    condition     = !(var.ec2_instance_count_max > 1 && !var.create_autoscaling)
-    error_message = "ec2_instance_count_max can't be set > 1 with create_autoscaling = false"
-  }
-}
-
-check "instance_min_count_validation" {
-  assert {
-    condition     = !(var.ec2_instance_count_min > 1 && !var.create_autoscaling)
-    error_message = "ec2_instance_count_min can't be set > 1 with create_autoscaling = false"
-  }
-}
-
 resource "aws_iam_role" "ec2" {
   name = "${var.name}-${var.ec2_instance_name_postfix}-ec2-role"
 
@@ -171,8 +150,16 @@ resource "aws_security_group" "ec2" {
   }
 }
 
+resource "aws_ssm_document" "ec2_config" {
+  name            = "${var.name}-${var.ec2_instance_name_postfix}-ec2-config"
+  document_format = "YAML"
+  document_type   = "Command"
+  target_type     = "/AWS::EC2::Instance"
+  content         = file("${path.module}/config.yaml")
+}
+
 resource "aws_ssm_association" "ec2_config" {
-  name = "AWS-UpdateSSMAgent"
+  name = aws_ssm_document.ec2_config.name
   targets {
     key    = "tag:Name"
     values = [local.instance_name_tag]
