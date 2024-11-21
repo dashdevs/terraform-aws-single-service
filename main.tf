@@ -21,23 +21,29 @@ module "ec2" {
   ec2_ingress_ports                  = var.ec2_ingress_ports
 }
 
-module "deployments" {
-  for_each          = module.ecr.application_repository_names
-  source            = "./modules/deployment"
-  name              = var.name
-  image_name        = each.value
-  application_name  = each.key
-  application_ports = var.applications_config[each.key].ports
-  application_env   = var.applications_config[each.key].env
-  application_cmd   = var.applications_config[each.key].cmd
+module "deployment_template" {
+  source = "./modules/deployment-template"
+  name   = var.name
 }
 
-module "deployment_triggers" {
-  for_each            = module.ecr.application_repository_names
-  source              = "./modules/ssm-document"
-  name                = "${var.name}-${each.key}"
-  autoscaling_group   = module.ec2.autoscaling_group
-  instance_name       = module.ec2.ec2_instance_name
-  repository_name     = each.value
-  deployment_document = module.deployments[each.key].ssm_document_arn
+module "deployment" {
+  for_each            = module.ecr.application_repositories
+  source              = "./modules/deployment"
+  deployment_document = module.deployment_template.ssm_document_name
+  docker_image        = each.value.url
+  application_name    = each.key
+  application_ports   = var.applications_config[each.key].ports
+  application_env     = var.applications_config[each.key].env
+  application_cmd     = var.applications_config[each.key].cmd
+  target_type         = var.create_autoscaling ? "autoscaling_group_name" : "instance_id"
+  target_ref          = var.create_autoscaling ? module.ec2.autoscaling_group : module.ec2.ec2_instance_id
+}
+
+module "deployment_events" {
+  for_each                  = module.ecr.application_repositories
+  source                    = "./modules/deployment-events"
+  name                      = "${var.name}-${each.key}"
+  instance_name             = module.ec2.ec2_instance_name
+  repository_name           = each.value.name
+  deployment_association_id = module.deployment[each.key].ssm_association_id
 }

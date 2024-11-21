@@ -1,18 +1,19 @@
 schemaVersion: "2.2"
 description: Docker Deployment
 parameters:
+  image:
+    type: String
   name:
     type: String
-    default: "${name}"
   ports:
     type: String
-    default: "${ports}"
+    default: ""
   env:
     type: String
-    default: "${env}"
+    default: ""
   cmd:
     type: String
-    default: "${cmd}"
+    default: ""
 mainSteps:
   - action: aws:runShellScript
     name: checkDockerInstallation
@@ -39,5 +40,5 @@ mainSteps:
           ${login_command}
           docker rm -f {{name}} 2>/dev/null || true
           docker image prune -a --force
-          docker image pull ${image}:latest
-          docker run --restart unless-stopped -d {{ports}} {{env}} --name {{name}} ${image}:latest {{cmd}}
+          docker image pull {{image}}:latest
+          docker run --restart unless-stopped -d {{ports}} {{env}} --name {{name}} {{image}}:latest {{cmd}}

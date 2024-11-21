@@ -1,19 +1,18 @@
-variable "name" {
+variable "deployment_document" {
   type = string
 }
 
-variable "image_name" {
+variable "docker_image" {
   type = string
 }
 
 variable "application_name" {
-  type    = string
-  default = "core"
+  type = string
 }
 
 variable "application_ports" {
   type    = string
-  default = "80:8080"
+  default = null
 }
 
 variable "application_env" {
@@ -26,11 +25,15 @@ variable "application_cmd" {
   default = null
 }
 
-variable "container_registry" {
+variable "target_ref" {
+  type = string
+}
+
+variable "target_type" {
   type = string
   validation {
-    condition     = contains(["ecr", "dockerhub"], var.container_registry)
-    error_message = "container_registry must be either 'ecr' or 'dockerhub'"
+    condition     = contains(["instance_id", "autoscaling_group_name"], var.target_type)
+    error_message = "target_type must be either 'instance_id' or 'autoscaling_group_name'"
   }
-  default = "ecr"
+  default = "instance_id"
 }

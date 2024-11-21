@@ -1,3 +1,3 @@
-output "ssm_document_arn" {
-  value = aws_ssm_document.docker_deployment.arn
+output "ssm_association_id" {
+  value = aws_ssm_association.deployment.association_id
 }
