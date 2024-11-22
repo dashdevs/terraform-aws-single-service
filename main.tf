@@ -39,11 +39,16 @@ module "deployment" {
   target_ref          = var.create_autoscaling ? module.ec2.autoscaling_group : module.ec2.ec2_instance_id
 }
 
+module "automations" {
+  source = "./modules/automations"
+  name   = var.name
+}
+
 module "deployment_events" {
-  for_each                  = module.ecr.application_repositories
-  source                    = "./modules/deployment-events"
-  name                      = "${var.name}-${each.key}"
-  instance_name             = module.ec2.ec2_instance_name
-  repository_name           = each.value.name
-  deployment_association_id = module.deployment[each.key].ssm_association_id
+  for_each                    = module.ecr.application_repositories
+  source                      = "./modules/deployment-events"
+  name                        = "${var.name}-${each.key}"
+  deployment_association_id   = module.deployment[each.key].ssm_association_id
+  deployment_run_document_arn = module.automations.association_start_document_arn
+  repository_name             = each.value.name
 }

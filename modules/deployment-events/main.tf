@@ -1,18 +1,56 @@
 data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
 
-
-locals {
-  # Workaround for an issue where the aws_ssm_document data source
-  # data "aws_ssm_document" "refresh_association" { name = "AWS-RefreshAssociation" }
-  # returns only the document name instead of the full ARN
-  # https://github.com/hashicorp/terraform-provider-aws/issues/33436
-  refresh_association_document_arn = "arn:aws:ssm:${data.aws_region.current.name}::document/AWS-RefreshAssociation"
+data "aws_iam_policy_document" "deployment_runner_trust" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["events.amazonaws.com"]
+    }
+  }
 }
 
-resource "aws_cloudwatch_event_rule" "ecr_image_action" {
-  name        = "${var.name}-pull-image-from-ECR"
-  description = "Rule to run ssm command on Linux server - pull image from ECR"
+data "aws_iam_policy_document" "deployment_runner_permissions" {
+  statement {
+    actions = ["ssm:StartAutomationExecution"]
+    resources = [
+      "${var.deployment_run_document_arn}",
+      "${var.deployment_run_document_arn}:*"
+    ]
+  }
+  statement {
+    actions = ["ssm:StartAssociationsOnce"]
+    resources = [
+      "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:association/${var.deployment_association_id}"
+    ]
+  }
+}
+
+
+# IAM roles and policies
+
+resource "aws_iam_role" "deployment_runner" {
+  name               = "${var.name}-deployment-runner"
+  assume_role_policy = data.aws_iam_policy_document.deployment_runner_trust.json
+}
+
+resource "aws_iam_policy" "deployment_runner" {
+  name   = "${var.name}-deployment-runner-policy"
+  policy = data.aws_iam_policy_document.deployment_runner_permissions.json
+}
+
+resource "aws_iam_role_policy_attachment" "deployment_runner" {
+  role       = aws_iam_role.deployment_runner.name
+  policy_arn = aws_iam_policy.deployment_runner.arn
+}
+
+
+# Deployment event rules
+
+resource "aws_cloudwatch_event_rule" "ecr_push" {
+  name        = "${var.name}-ecr-push"
+  description = "Rule triggered by ECR image push to start SSM automation"
 
   event_pattern = jsonencode({
     source      = ["aws.ecr"]
@@ -26,60 +64,9 @@ resource "aws_cloudwatch_event_rule" "ecr_image_action" {
   })
 }
 
-resource "aws_cloudwatch_event_target" "ecr_push_target" {
-  rule     = aws_cloudwatch_event_rule.ecr_image_action.name
-  arn      = local.refresh_association_document_arn
-  input    = "{\"associationIds\":[\"${var.deployment_association_id}\"]}"
-  role_arn = aws_iam_role.ssm_lifecycle.arn
-
-  run_command_targets {
-    key    = "tag:Name"
-    values = ["${var.instance_name}"]
-  }
-}
-
-data "aws_iam_policy_document" "ssm_lifecycle_trust" {
-  statement {
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["events.amazonaws.com"]
-    }
-  }
-}
-
-data "aws_iam_policy_document" "ssm_lifecycle" {
-  statement {
-    effect    = "Allow"
-    actions   = ["ssm:SendCommand"]
-    resources = ["arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:instance/*"]
-
-    condition {
-      test     = "StringEquals"
-      variable = "ec2:ResourceTag/Name"
-      values   = ["${var.instance_name}"]
-    }
-  }
-
-  statement {
-    effect    = "Allow"
-    actions   = ["ssm:SendCommand"]
-    resources = [local.refresh_association_document_arn]
-  }
-}
-
-resource "aws_iam_role" "ssm_lifecycle" {
-  name               = "${var.name}-SSMLifecycle"
-  assume_role_policy = data.aws_iam_policy_document.ssm_lifecycle_trust.json
-}
-
-resource "aws_iam_policy" "ssm_lifecycle" {
-  name   = "${var.name}-SSMLifecycle"
-  policy = data.aws_iam_policy_document.ssm_lifecycle.json
-}
-
-resource "aws_iam_role_policy_attachment" "ssm_lifecycle" {
-  policy_arn = aws_iam_policy.ssm_lifecycle.arn
-  role       = aws_iam_role.ssm_lifecycle.name
+resource "aws_cloudwatch_event_target" "ecr_push_deployment_run" {
+  rule     = aws_cloudwatch_event_rule.ecr_push.name
+  arn      = var.deployment_run_document_arn
+  input    = jsonencode({ associationId = [var.deployment_association_id] })
+  role_arn = aws_iam_role.deployment_runner.arn
 }
