@@ -23,7 +23,7 @@ module "ec2" {
 
 module "deployment_template" {
   source = "./modules/deployment-template"
-  name   = var.name
+  name   = "${var.name}-deployment"
 }
 
 module "deployment" {

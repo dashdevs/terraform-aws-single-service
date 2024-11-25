@@ -18,10 +18,12 @@ module "admin_panel_computing" {
   vpc_id                    = var.vpc_id
   ec2_subnets               = var.subnets
   ec2_instance_name_postfix = var.instance_name
-  applications_config       = [{
-    application_name  = var.application_name
-    application_ports = "80:8080"
-  }]
+
+  applications_config = {
+    core = {
+      ports = "80:8080"
+    }
+  }
 }
 
 ```
@@ -39,17 +41,16 @@ module "computing" {
   ec2_instance_name_postfix = var.instance_name
   create_autoscaling        = true
   ec2_instance_count_max    = 2
-  applications_config = [{
-    application_name  = var.application_name
-    application_ports = "80:8080"
-    application_start_command = null
-    application_env_vars = [
-      {
-        name = "example_var_name"
-        value = "example_var_value"
+
+  applications_config = {
+    core = {
+      ports = "80:8080"
+      cmd   = null
+      env = {
+        example_var_name = "example_var_value"
       }
-    ]
-  }]
+    }
+  }
 }
 ```
 
@@ -76,7 +77,7 @@ module "computing" {
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | Identifier of the VPC to which the internal resources will be connected | `string` | `n/a` | yes |
 | <a name="input_ec2_subnets"></a> [ec2\_subnets](#input\_ec2\_subnets) | List of subnet identifiers to which the internal resources will be connected | `list(string)` | `n/a` | yes |
 | <a name="input_ec2_create_eip"></a> [ec2\_create\_eip](#input\_ec2\_create\_eip) | Used to create Elastic IP and assign to the EC2 instance | `bool` |`false`| no |
-| <a name="input_ec2_instance_type"></a> [ec2\_instance\_type](#input\_ec2\_instance\_type) | Type of an EC2 instances | `string` |`t2.micro`| no |
+| <a name="input_ec2_instance_type"></a> [ec2\_instance\_type](#input\_ec2\_instance\_type) | EC2 instance type to be used. If `create_autoscaling` is enabled, this will apply to each instance in the autoscaling group | `string` | `t2.micro` | no |
 | <a name="input_ec2_instance_count_min"></a> [ec2\_instance\_count\_min](#input\_ec2\_instance\_count\_min) | Minimum number of EC2 instances that should be provisioned if `create_autoscaling` is `true` | `number` |`1`| no |
 | <a name="input_ec2_instance_count_max"></a> [ec2\_instance\_count\_max](#input\_ec2\_instance\_count\_max) | Maximum number of EC2 instances that should be provisioned if `create_autoscaling` is `true` | `number` |`1`| no |
 | <a name="input_attach_ecr_based_deployment_policy"></a> [attach\_ecr\_based\_deployment\_policy](#input\_attach\_ecr\_based\_deployment\_policy) | If `true`, will attach ecr based deployment policy to EC2 instances | `bool` |`true`| no |
@@ -85,18 +86,14 @@ module "computing" {
 | <a name="input_target_group_arns"></a> [target\_group\_arns](#input\_target\_group\_arns) | Loadbalancer target group ARN list. Used for attach EC2 instance to loadbalancer, if `create_autoscaling` is `false` | `list(string)` |`[]`| no |
 | <a name="input_ec2_instance_name_postfix"></a> [ec2\_instance\_name\_postfix](#input\_ec2\_instance\_name\_postfix) | A primary keyword of the instance name. The resulting instance name will consist of name prefix and instance name postfix. | `string` |`server`| no |
 | <a name="input_ec2_ingress_ports"></a> [ec2\_ingress\_ports](#input\_ec2\_ingress\_ports) | The list of ports that are allowed for incoming traffic to an EC2 instance | `list(string)` |`["80", "22"]`| no |
-| <a name="input_applications_config"></a> [applications\_config](#input\_applications\_config) | Applications connfig map for map application name, ports, start_coommand, and list of environment variables | `list(object({application_name, application_ports}))` |See defaults in [application\_name](#input\_application\_name), [application\_ports](#input\_application\_ports), [application\_start\_command](#input\_application\_start\_command) and [application\_env\_vars](#input\_application\_env\_vars) | no |
-| <a name="input_application_name"></a> [application\_name](#input\_application\_name) | Application name. Internal field in [applications\_config](#input\_applications\_config) | `string` |`core`| no |
-| <a name="input_application_ports"></a> [application\_ports](#input\_application\_ports) | Application ports. Internal field in [applications\_config](#input\_applications\_config) | `string` |`"80:8080"`| no |
-| <a name="input_application_start_command"></a> [application\_start\_command](#input\_application\_start\_command) | Application Docker endpoint in the ssm document. Internal field in [applications\_config](#input\_applications\_config) | `string` |`null`| no |
-| <a name="input_application_env_vars"></a> [application\_env\_vars](#input\_application\_env\_vars) | List of map of the application environment variables in the ssm document. Wher `name` it is the variable name and `value` it is the variable value. Internal field in [applications\_config](#input\_applications\_config) | `list(object{name = string, value = string})` |`[]`| no |
+| <a name="input_applications_config"></a> [applications\_config](#input\_applications\_config) | Applications configuration map for application name, ports, start command, and environment variables. | `map(object({ ports = optional(string, null), env = optional(map(string), {}), cmd = optional(string, null) }))` | `{"core": { "ports": "80:8080" }}` | no |
 
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| <a name="output_ec2_instance_role"></a> [ec2\_instance\_role](#output\ec2\_instance\_role) | The IAM role identifier assigned to the EC2 instance |
+| <a name="output_ec2_instance_role"></a> [ec2\_instance\_role](#output\_ec2\_instance\_role) | The IAM role identifier assigned to the EC2 instance |
 | <a name="output_ec2_ssh_keypair_value"></a> [ec2\_ssh\_keypair\_value](#output\_ec2\_ssh\_keypair\_value) | The value of the SSH key pair that will be used for EC2 instances |
 | <a name="output_ec2_security_group_id"></a> [ec2\_security\_group\_id](#output\_ec2\_security\_group\_id) | The security group identifier assigned to the EC2 instance |
 | <a name="output_ec2_instance_id"></a> [ec2\_instance\_id](#output\_ec2\_instance\_id) | EC2 Instance identifier |
