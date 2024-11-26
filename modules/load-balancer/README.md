@@ -12,7 +12,7 @@ systematic way so that they do not catch you by surprise.
 
 ### example:
 ```
-module "load-balancer" {
+module "load_balancer" {
   source            = "dashdevs/single-service/aws//modules/load-balancer"
   name              = var.name_prefix
   vpc_id            = var.vpc_id

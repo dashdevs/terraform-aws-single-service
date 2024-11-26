@@ -37,7 +37,7 @@ module "computing" {
   vpc_id                    = var.vpc_id
   ec2_subnets               = var.private_subnets
   ec2_instance_type         = var.ec2_instance_type
-  target_group_arns         = module.load-balancer.target_group_arns
+  target_group_arns         = module.load_balancer.target_group_arns
   ec2_instance_name_postfix = var.instance_name
   create_autoscaling        = true
   ec2_instance_count_max    = 2

@@ -1,11 +1,11 @@
-module "ecr" {
-  source            = "./modules/ecr"
+module "container_registry" {
+  source            = "./modules/container-registry"
   name              = var.name
   application_names = keys(var.applications_config)
 }
 
-module "ec2" {
-  source                             = "./modules/ec2"
+module "computing" {
+  source                             = "./modules/computing"
   name                               = var.name
   vpc_id                             = var.vpc_id
   ec2_subnets                        = var.ec2_subnets
@@ -27,7 +27,7 @@ module "deployment_template" {
 }
 
 module "deployment" {
-  for_each            = module.ecr.application_repositories
+  for_each            = module.container_registry.application_repositories
   source              = "./modules/deployment"
   deployment_document = module.deployment_template.ssm_document_name
   docker_image        = each.value.url
@@ -36,7 +36,7 @@ module "deployment" {
   application_env     = var.applications_config[each.key].env
   application_cmd     = var.applications_config[each.key].cmd
   target_type         = var.create_autoscaling ? "autoscaling_group_name" : "instance_id"
-  target_ref          = var.create_autoscaling ? module.ec2.autoscaling_group : module.ec2.ec2_instance_id
+  target_ref          = var.create_autoscaling ? module.computing.autoscaling_group : module.computing.ec2_instance_id
 }
 
 module "automations" {
@@ -45,7 +45,7 @@ module "automations" {
 }
 
 module "deployment_events" {
-  for_each                    = module.ecr.application_repositories
+  for_each                    = module.container_registry.application_repositories
   source                      = "./modules/deployment-events"
   name                        = "${var.name}-${each.key}"
   deployment_association_id   = module.deployment[each.key].ssm_association_id

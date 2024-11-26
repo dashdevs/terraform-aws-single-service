@@ -1,4 +1,4 @@
-# terraform-aws-single-service-ecr
+# terraform-aws-single-service-container-registry
 
 
 ## Usage
@@ -12,8 +12,8 @@ systematic way so that they do not catch you by surprise.
 
 ### example:
 ```
-module "ecr" {
-  source            = "dashdevs/single-service/aws//modules/ecr"
+module "container_registry" {
+  source            = "dashdevs/single-service/aws//modules/container-registry"
   name              = var.name_prefix
   application_names = var.application_names
 }

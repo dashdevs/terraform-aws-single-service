@@ -1,4 +1,4 @@
-# terraform-aws-single-service-ec2
+# terraform-aws-single-service-computing
 
 
 ## Usage
@@ -13,7 +13,7 @@ systematic way so that they do not catch you by surprise.
 ### example for one EC2 instance:
 ```
 module "ec2" {
-  source                    = "dashdevs/single-service/aws//modules/ec2"
+  source                    = "dashdevs/single-service/aws//modules/computing"
   name                      = var.name_prefix
   vpc_id                    = var.vpc_id
   ec2_subnets               = var.public_subnets
@@ -27,12 +27,12 @@ module "ec2" {
 
 ```
 module "autoscaling_group" {
-  source                    = "dashdevs/single-service/aws//modules/ec2"
+  source                    = "dashdevs/single-service/aws//modules/computing"
   name                      = var.name_prefix
   vpc_id                    = var.vpc_id
   ec2_subnets               = var.private_subnets
   ec2_instance_type         = var.ec2_instance_type
-  target_group_arns         = module.load-balancer.target_group_arns
+  target_group_arns         = module.load_balancer.target_group_arns
   ec2_instance_name_postfix = var.ec2_instance_name_postfix
   create_autoscaling        = true
   ec2_instance_count_max    = 2
