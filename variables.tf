@@ -61,17 +61,10 @@ variable "ec2_ingress_ports" {
 }
 
 variable "applications_config" {
-  type = list(object({
-    application_name          = string
-    application_ports         = optional(string, null)
-    application_start_command = optional(string, null)
-    application_env_vars = optional(list(object({
-      name  = string
-      value = string
-    })), [])
+  type = map(object({
+    ports = optional(string, null)
+    env   = optional(map(string), {})
+    cmd   = optional(string, null)
   }))
-  default = [{
-    application_name  = "core"
-    application_ports = "80:8080"
-  }]
+  default = { core = { ports = "80:8080" } }
 }

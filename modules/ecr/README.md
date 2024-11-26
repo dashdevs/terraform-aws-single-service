@@ -46,4 +46,4 @@ module "ecr" {
 
 | Name | Description |
 |------|-------------|
-| <a name="output_repository_names"></a> [repository\_names](#output\_repository\_names) | List of docker repository full names.  |
+| <a name="output_application_repositories"></a> [application_repositories](#output\_application\_repositories) | A map of application names to their respective repository names and URLs. |
