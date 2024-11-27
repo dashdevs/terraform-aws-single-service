@@ -13,12 +13,7 @@ locals {
 
 data "aws_ami" "amazon-linux-2" {
   most_recent = true
-
-  filter {
-    name   = "owner-alias"
-    values = ["amazon"]
-  }
-
+  owners      = ["amazon"]
   filter {
     name   = "name"
     values = ["amzn2-ami-hvm*"]
@@ -43,8 +38,12 @@ resource "aws_iam_role" "ec2" {
    ]
 }
 EOF
+}
 
-  managed_policy_arns = local.managed_policy_arns
+resource "aws_iam_role_policy_attachment" "ec2" {
+  for_each   = toset(local.managed_policy_arns)
+  role       = aws_iam_role.ec2.name
+  policy_arn = each.value
 }
 
 resource "aws_iam_instance_profile" "ec2" {
