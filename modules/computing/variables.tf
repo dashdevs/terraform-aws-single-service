@@ -30,6 +30,11 @@ variable "ec2_instance_count_max" {
   default = 1
 }
 
+variable "ec2_root_storage_size" {
+  type    = number
+  default = 8
+}
+
 variable "attach_ecr_based_deployment_policy" {
   type    = bool
   default = true

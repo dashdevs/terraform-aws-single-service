@@ -1,0 +1,22 @@
+schemaVersion: "2.2"
+description: Configure EC2
+mainSteps:
+  - action: aws:runDocument
+    name: updateSsmAgent
+    inputs:
+      documentType: SSMDocument
+      documentPath: AWS-UpdateSSMAgent
+  - action: aws:runDocument
+    name: installDocker
+    inputs:
+      documentType: SSMDocument
+      documentPath: AWS-ConfigureDocker
+      documentParameters:
+        action: Install
+  - action: aws:runShellScript
+    name: configureDocker
+    inputs:
+      runCommand:
+        - usermod -a -G docker ec2-user
+        - systemctl enable docker
+        - systemctl start docker

@@ -1,17 +1,11 @@
-locals {
-  application_names = [
-    for config in var.applications_config : config.application_name
-  ]
-}
-
-module "ecr" {
-  source            = "./modules/ecr"
+module "container_registry" {
+  source            = "./modules/container-registry"
   name              = var.name
-  application_names = local.application_names
+  application_names = keys(var.applications_config)
 }
 
-module "ec2" {
-  source                             = "./modules/ec2"
+module "computing" {
+  source                             = "./modules/computing"
   name                               = var.name
   vpc_id                             = var.vpc_id
   ec2_subnets                        = var.ec2_subnets
@@ -27,15 +21,34 @@ module "ec2" {
   ec2_ingress_ports                  = var.ec2_ingress_ports
 }
 
+module "deployment_template" {
+  source = "./modules/deployment-template"
+  name   = "${var.name}-deployment"
+}
+
 module "deployment" {
-  count                     = length(module.ecr.repository_names)
-  source                    = "./modules/ssm-document"
-  name                      = var.name
-  autoscaling_group         = module.ec2.autoscaling_group
-  instance_name             = module.ec2.ec2_instance_name
-  repository_name           = module.ecr.repository_names[count.index]
-  application_name          = var.applications_config[count.index].application_name
-  application_ports         = var.applications_config[count.index].application_ports
-  application_start_command = var.applications_config[count.index].application_start_command
-  application_env_vars      = var.applications_config[count.index].application_env_vars
+  for_each            = module.container_registry.application_repositories
+  source              = "./modules/deployment"
+  deployment_document = module.deployment_template.ssm_document_name
+  docker_image        = each.value.url
+  application_name    = each.key
+  application_ports   = var.applications_config[each.key].ports
+  application_env     = var.applications_config[each.key].env
+  application_cmd     = var.applications_config[each.key].cmd
+  target_type         = var.create_autoscaling ? "autoscaling_group_name" : "instance_id"
+  target_ref          = var.create_autoscaling ? module.computing.autoscaling_group : module.computing.ec2_instance_id
+}
+
+module "automations" {
+  source = "./modules/automations"
+  name   = var.name
+}
+
+module "deployment_events" {
+  for_each                    = module.container_registry.application_repositories
+  source                      = "./modules/deployment-events"
+  name                        = "${var.name}-${each.key}"
+  deployment_association_id   = module.deployment[each.key].ssm_association_id
+  deployment_run_document_arn = module.automations.association_start_document_arn
+  repository_name             = each.value.name
 }

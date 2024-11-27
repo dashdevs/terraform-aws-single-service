@@ -1,4 +1,4 @@
-# terraform-aws-single-service-ecr
+# terraform-aws-single-service-container-registry
 
 
 ## Usage
@@ -12,8 +12,8 @@ systematic way so that they do not catch you by surprise.
 
 ### example:
 ```
-module "ecr" {
-  source            = "dashdevs/single-service/aws//modules/ecr"
+module "container_registry" {
+  source            = "dashdevs/single-service/aws//modules/container-registry"
   name              = var.name_prefix
   application_names = var.application_names
 }
@@ -26,14 +26,14 @@ module "ecr" {
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 0.13.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 3.34 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9.3 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.78 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 3.34 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.78 |
 
 ## Inputs
 
@@ -46,4 +46,4 @@ module "ecr" {
 
 | Name | Description |
 |------|-------------|
-| <a name="output_repository_names"></a> [repository\_names](#output\_repository\_names) | List of docker repository full names.  |
+| <a name="output_application_repositories"></a> [application_repositories](#output\_application\_repositories) | A map of application names to their respective repository names and URLs. |

@@ -13,36 +13,10 @@ locals {
 
 data "aws_ami" "amazon-linux-2" {
   most_recent = true
-
-  filter {
-    name   = "owner-alias"
-    values = ["amazon"]
-  }
-
+  owners      = ["amazon"]
   filter {
     name   = "name"
     values = ["amzn2-ami-hvm*"]
-  }
-}
-
-check "eip_validation" {
-  assert {
-    condition     = !(var.ec2_create_eip && var.create_autoscaling)
-    error_message = "ec2_create_eip can't be set true with create_autoscaling = true"
-  }
-}
-
-check "instance_max_count_validation" {
-  assert {
-    condition     = !(var.ec2_instance_count_max > 1 && !var.create_autoscaling)
-    error_message = "ec2_instance_count_max can't be set > 1 with create_autoscaling = false"
-  }
-}
-
-check "instance_min_count_validation" {
-  assert {
-    condition     = !(var.ec2_instance_count_min > 1 && !var.create_autoscaling)
-    error_message = "ec2_instance_count_min can't be set > 1 with create_autoscaling = false"
   }
 }
 
@@ -64,8 +38,12 @@ resource "aws_iam_role" "ec2" {
    ]
 }
 EOF
+}
 
-  managed_policy_arns = local.managed_policy_arns
+resource "aws_iam_role_policy_attachment" "ec2" {
+  for_each   = toset(local.managed_policy_arns)
+  role       = aws_iam_role.ec2.name
+  policy_arn = each.value
 }
 
 resource "aws_iam_instance_profile" "ec2" {
@@ -82,11 +60,13 @@ resource "aws_instance" "ec2" {
   key_name                    = aws_key_pair.ec2.key_name
   subnet_id                   = var.ec2_subnets[0]
   vpc_security_group_ids      = [aws_security_group.ec2.id]
-  user_data                   = file("${path.module}/docker.tftpl")
-  user_data_replace_on_change = true
-  
+
   tags = {
     Name = local.instance_name_tag
+  }
+
+  root_block_device {
+    volume_size = var.ec2_root_storage_size
   }
 
   lifecycle {
@@ -102,7 +82,10 @@ resource "aws_launch_configuration" "core_conf" {
   instance_type        = var.ec2_instance_type
   key_name             = aws_key_pair.ec2.key_name
   security_groups      = [aws_security_group.ec2.id]
-  user_data            = file("${path.module}/docker.tftpl")
+
+  root_block_device {
+    volume_size = var.ec2_root_storage_size
+  }
 
   lifecycle {
     create_before_destroy = true
@@ -163,6 +146,22 @@ resource "aws_security_group" "ec2" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_ssm_document" "ec2_config" {
+  name            = "${var.name}-${var.ec2_instance_name_postfix}-ec2-config"
+  document_format = "YAML"
+  document_type   = "Command"
+  target_type     = "/AWS::EC2::Instance"
+  content         = file("${path.module}/config.yaml")
+}
+
+resource "aws_ssm_association" "ec2_config" {
+  name = aws_ssm_document.ec2_config.name
+  targets {
+    key    = "tag:Name"
+    values = [local.instance_name_tag]
   }
 }
 

@@ -1,4 +1,4 @@
-# terraform-aws-single-service-ec2
+# terraform-aws-single-service-computing
 
 
 ## Usage
@@ -13,7 +13,7 @@ systematic way so that they do not catch you by surprise.
 ### example for one EC2 instance:
 ```
 module "ec2" {
-  source                    = "dashdevs/single-service/aws//modules/ec2"
+  source                    = "dashdevs/single-service/aws//modules/computing"
   name                      = var.name_prefix
   vpc_id                    = var.vpc_id
   ec2_subnets               = var.public_subnets
@@ -27,12 +27,12 @@ module "ec2" {
 
 ```
 module "autoscaling_group" {
-  source                    = "dashdevs/single-service/aws//modules/ec2"
+  source                    = "dashdevs/single-service/aws//modules/computing"
   name                      = var.name_prefix
   vpc_id                    = var.vpc_id
   ec2_subnets               = var.private_subnets
   ec2_instance_type         = var.ec2_instance_type
-  target_group_arns         = module.load-balancer.target_group_arns
+  target_group_arns         = module.load_balancer.target_group_arns
   ec2_instance_name_postfix = var.ec2_instance_name_postfix
   create_autoscaling        = true
   ec2_instance_count_max    = 2
@@ -45,14 +45,14 @@ module "autoscaling_group" {
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.5.2 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 3.34 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9.3 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.78 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 3.34 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.78 |
 
 ## Inputs
 
@@ -65,6 +65,7 @@ module "autoscaling_group" {
 | <a name="input_ec2_instance_type"></a> [ec2\_instance\_type](#input\_ec2\_instance\_type) | Type of an EC2 instances | `string` |`t2.micro`| no |
 | <a name="input_ec2_instance_count_min"></a> [ec2\_instance\_count\_min](#input\_ec2\_instance\_count\_min) | Minimum number of EC2 instances that should be provisioned if `create_autoscaling` is true | `number` |`1`| no |
 | <a name="input_ec2_instance_count_max"></a> [ec2\_instance\_count\_max](#input\_ec2\_instance\_count\_max) | Maximum number of EC2 instances that should be provisioned if `create_autoscaling` is true | `number` |`1`| no |
+| <a name="input_ec2_root_storage_size"></a> [ec2\_root\_storage\_size](#input\_ec2\_root\_storage\_size) | Size of the root volume attached to EC2 instances in gigabytes | `number` |`8`| no |
 | <a name="input_attach_ecr_based_deployment_policy"></a> [attach\_ecr\_based\_deployment\_policy](#input\_attach\_ecr\_based\_deployment\_policy) | If `true`, will attach ecr based deployment policy to EC2 instances | `bool` |`true`| no |
 | <a name="input_iam_role_additional_policies"></a> [iam\_role\_additional\_policies](#input\_iam\_role\_additional\_policies) | List of additional IAM policy for attach to EC2 instances | `list(string)` |`[]`| no |
 | <a name="input_create_autoscaling"></a> [create\_autoscaling](#input\_create\_autoscaling) | Used to create autoscaling group. If `true`, will create autoscaling group | `bool` |`false`| no |
