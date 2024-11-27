@@ -35,6 +35,21 @@ module "deployment" {
 
 This example creates an SSM document for Docker-based deployment and uses it to deploy an application to an Auto Scaling group. The deployment document automates tasks like Docker login, image pulling, and container startup, while the deployment module associates the document with the specified target.
 
+<!-- markdownlint-restore -->
+<!-- markdownlint-disable -->
+## Requirements
+
+| Name | Version |
+|------|---------|
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9.3 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.78 |
+
+## Providers
+
+| Name | Version |
+|------|---------|
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.78 |
+
 ## Inputs
 
 | Name | Description | Type | Default | Required |
