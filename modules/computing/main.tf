@@ -41,9 +41,9 @@ EOF
 }
 
 resource "aws_iam_role_policy_attachment" "ec2" {
-  for_each   = toset(local.managed_policy_arns)
+  count      = length(local.managed_policy_arns)
   role       = aws_iam_role.ec2.name
-  policy_arn = each.value
+  policy_arn = local.managed_policy_arns[count.index]
 }
 
 resource "aws_iam_instance_profile" "ec2" {
