@@ -14,6 +14,7 @@ module "computing" {
   create_autoscaling                 = var.create_autoscaling
   ec2_instance_count_min             = var.ec2_instance_count_min
   ec2_instance_count_max             = var.ec2_instance_count_max
+  ec2_root_storage_size              = var.ec2_root_storage_size
   attach_ecr_based_deployment_policy = var.attach_ecr_based_deployment_policy
   iam_role_additional_policies       = var.iam_role_additional_policies
   target_group_arns                  = var.target_group_arns
