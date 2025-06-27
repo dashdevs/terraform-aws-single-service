@@ -70,6 +70,7 @@ variable "applications_config" {
     ports   = optional(string, null)
     env     = optional(map(string), {})
     cmd     = optional(string, null)
+    network = optional(string, null)
     configs = optional(map(object({
       path    = string
       content = string

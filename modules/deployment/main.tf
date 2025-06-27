@@ -29,6 +29,7 @@ resource "aws_ssm_association" "deployment" {
     files   = local.config_files
     ports   = local.docker_ports
     env     = local.docker_env
+    network = var.application_network
     volumes = local.docker_volumes
     cmd     = var.application_cmd
   }

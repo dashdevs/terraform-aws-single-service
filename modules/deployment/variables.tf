@@ -20,6 +20,11 @@ variable "application_env" {
   default = {}
 }
 
+variable "application_network" {
+  type    = string
+  default = null
+}
+
 variable "application_configs" {
   type = map(object({
     path    = string

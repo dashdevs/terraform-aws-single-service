@@ -14,6 +14,9 @@ parameters:
   env:
     type: String
     default: ""
+  network:
+    type: String
+    default: ""
   volumes:
     type: String
     default: ""
@@ -62,8 +65,20 @@ mainSteps:
     inputs:
       runCommand:
         - |
+          set -euo pipefail
+
+          docker_args=""
+          if [ -n "{{ network }}" ]; then
+            docker network create "{{ network }}" 2>/dev/null || true
+            docker_args="$docker_args --network {{ network }}"
+          fi
+
           ${login_command}
+
           docker rm -f {{name}} 2>/dev/null || true
           docker image prune -a --force
           docker image pull {{image}}:latest
-          docker run --restart unless-stopped -d {{ports}} {{env}} {{volumes}} --name {{name}} {{image}}:latest {{cmd}}
+
+          docker run --restart unless-stopped -d \
+            {{ports}} {{env}} {{volumes}} $docker_args --name {{name}} {{image}}:latest \
+            {{cmd}}

@@ -36,6 +36,7 @@ module "deployment" {
   application_ports   = var.applications_config[each.key].ports
   application_env     = var.applications_config[each.key].env
   application_cmd     = var.applications_config[each.key].cmd
+  application_network = var.applications_config[each.key].network
   application_configs = var.applications_config[each.key].configs
   target_type         = var.create_autoscaling ? "autoscaling_group_name" : "instance_id"
   target_ref          = var.create_autoscaling ? module.computing.autoscaling_group : module.computing.ec2_instance_id
