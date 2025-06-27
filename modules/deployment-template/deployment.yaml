@@ -5,10 +5,16 @@ parameters:
     type: String
   name:
     type: String
+  files:
+    type: String
+    default: ""
   ports:
     type: String
     default: ""
   env:
+    type: String
+    default: ""
+  volumes:
     type: String
     default: ""
   cmd:
@@ -32,6 +38,25 @@ mainSteps:
           done
           docker --version
       onFailure: exit
+  - name: writeApplicationFiles
+    action: aws:runShellScript
+    inputs:
+      runCommand:
+        - |
+          set -euo pipefail
+          if [ -z "{{ files }}" ]; then
+            echo "No files to write. Skipping this step."
+            exit 0
+          fi
+
+          volume_source_dir="/srv/docker/{{ name }}"
+          mkdir -p "$volume_source_dir"
+
+          echo "{{ files }}" | tr ',' '\n' | while IFS=':' read -r file_name file_content_base64; do
+            echo "Writing file: $file_name to $volume_source_dir..."
+            echo "$file_content_base64" | base64 -d > "$volume_source_dir/$file_name"
+          done
+      onFailure: exit
   - action: aws:runShellScript
     name: rolloutApplication
     inputs:
@@ -41,4 +66,4 @@ mainSteps:
           docker rm -f {{name}} 2>/dev/null || true
           docker image prune -a --force
           docker image pull {{image}}:latest
-          docker run --restart unless-stopped -d {{ports}} {{env}} --name {{name}} {{image}}:latest {{cmd}}
+          docker run --restart unless-stopped -d {{ports}} {{env}} {{volumes}} --name {{name}} {{image}}:latest {{cmd}}

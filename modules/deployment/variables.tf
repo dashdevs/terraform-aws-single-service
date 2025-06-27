@@ -20,6 +20,14 @@ variable "application_env" {
   default = {}
 }
 
+variable "application_configs" {
+  type = map(object({
+    path    = string
+    content = string
+  }))
+  default = {}
+}
+
 variable "application_cmd" {
   type    = string
   default = null
