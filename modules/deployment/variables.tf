@@ -25,6 +25,11 @@ variable "application_network" {
   default = null
 }
 
+variable "application_volumes" {
+  type    = list(string)
+  default = []
+}
+
 variable "application_configs" {
   type = map(object({
     path    = string

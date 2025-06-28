@@ -71,6 +71,7 @@ variable "applications_config" {
     env     = optional(map(string), {})
     cmd     = optional(string, null)
     network = optional(string, null)
+    volumes = optional(list(string), [])
     configs = optional(map(object({
       path    = string
       content = string

@@ -5,14 +5,15 @@ locals {
     " ", [for name, value in var.application_env : "-e ${name}=${value}"]
   ) : null
 
-  config_mappings = [
-    for name, config in var.application_configs : {
-      file   = "${name}:${base64encode(config.content)}"
-      volume = "-v /srv/docker/${var.application_name}/${name}:${config.path}"
-    }
-  ]
-  config_files   = length(local.config_mappings) > 0 ? join(",", local.config_mappings[*].file) : null
-  docker_volumes = length(local.config_mappings) > 0 ? join(" ", local.config_mappings[*].volume) : null
+  config_mappings = [for name, config in var.application_configs : {
+    file   = "${name}:${base64encode(config.content)}"
+    volume = "/srv/docker/${var.application_name}/${name}:${config.path}"
+  }]
+  config_files = length(local.config_mappings) > 0 ? join(",", local.config_mappings[*].file) : null
+
+  docker_volumes = length(local.config_mappings) > 0 || length(var.application_volumes) > 0 ? join(
+    " ", formatlist("-v %s", concat(local.config_mappings[*].volume, var.application_volumes))
+  ) : null
 
   target_key = lookup({
     instance_id            = "InstanceIds"
