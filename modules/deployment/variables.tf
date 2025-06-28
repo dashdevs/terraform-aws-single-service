@@ -6,6 +6,11 @@ variable "docker_image" {
   type = string
 }
 
+variable "docker_run_flags" {
+  type    = string
+  default = null
+}
+
 variable "application_name" {
   type = string
 }

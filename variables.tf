@@ -67,6 +67,7 @@ variable "ec2_ingress_ports" {
 
 variable "applications_config" {
   type = map(object({
+    flags   = optional(string, null)
     ports   = optional(string, null)
     env     = optional(map(string), {})
     cmd     = optional(string, null)

@@ -33,6 +33,7 @@ module "deployment" {
   deployment_document = module.deployment_template.ssm_document_name
   docker_image        = each.value.url
   application_name    = each.key
+  docker_run_flags    = var.applications_config[each.key].flags
   application_ports   = var.applications_config[each.key].ports
   application_env     = var.applications_config[each.key].env
   application_cmd     = var.applications_config[each.key].cmd

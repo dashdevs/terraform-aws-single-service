@@ -5,6 +5,9 @@ parameters:
     type: String
   name:
     type: String
+  flags:
+    type: String
+    default: "--restart unless-stopped"
   files:
     type: String
     default: ""
@@ -79,6 +82,5 @@ mainSteps:
           docker image prune -a --force
           docker image pull {{image}}:latest
 
-          docker run --restart unless-stopped -d \
-            {{ports}} {{env}} {{volumes}} $docker_args --name {{name}} {{image}}:latest \
-            {{cmd}}
+          docker run -d {{flags}} {{ports}} {{env}} {{volumes}} $docker_args \
+            --name {{name}} {{image}}:latest {{cmd}}
