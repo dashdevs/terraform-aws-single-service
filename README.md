@@ -21,7 +21,15 @@ module "admin_panel_computing" {
 
   applications_config = {
     core = {
+      flags = "--rm"
       ports = "80:8080"
+      volumes = ["/data:/data"]
+      configs = {
+        "config.json" = {
+          path    = "/app/config/config.json"
+          content = jsonencode({ key = "value" })
+        }
+      }
     }
   }
 }
@@ -48,6 +56,14 @@ module "computing" {
       cmd   = null
       env = {
         example_var_name = "example_var_value"
+      }
+      network = "core-network"
+      volumes = ["/data:/data"]
+      configs = {
+        "config.json" = {
+          path    = "/app/config/config.json"
+          content = jsonencode({ key = "value" })
+        }
       }
     }
   }
@@ -87,7 +103,7 @@ module "computing" {
 | <a name="input_target_group_arns"></a> [target\_group\_arns](#input\_target\_group\_arns) | Loadbalancer target group ARN list. Used for attach EC2 instance to loadbalancer, if `create_autoscaling` is `false` | `list(string)` |`[]`| no |
 | <a name="input_ec2_instance_name_postfix"></a> [ec2\_instance\_name\_postfix](#input\_ec2\_instance\_name\_postfix) | A primary keyword of the instance name. The resulting instance name will consist of name prefix and instance name postfix. | `string` |`server`| no |
 | <a name="input_ec2_ingress_ports"></a> [ec2\_ingress\_ports](#input\_ec2\_ingress\_ports) | The list of ports that are allowed for incoming traffic to an EC2 instance | `list(string)` |`["80", "22"]`| no |
-| <a name="input_applications_config"></a> [applications\_config](#input\_applications\_config) | Applications configuration map for application name, ports, start command, and environment variables. | `map(object({ ports = optional(string, null), env = optional(map(string), {}), cmd = optional(string, null) }))` | `{"core": { "ports": "80:8080" }}` | no |
+| <a name="input_applications_config"></a> [applications\_config](#input\_applications\_config) | Applications configuration map for application name, ports, start command, and environment variables. | `map(object({ flags = optional(string, null), ports = optional(string, null), env = optional(map(string), {}), cmd = optional(string, null), network = optional(string, null), volumes = optional(list(string), []), configs = optional(map(object({ path = string, content = string })), {}) }))` | `{"core": { "ports": "80:8080" }}` | no |
 
 
 ## Outputs

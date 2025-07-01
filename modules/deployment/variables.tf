@@ -6,6 +6,11 @@ variable "docker_image" {
   type = string
 }
 
+variable "docker_run_flags" {
+  type    = string
+  default = null
+}
+
 variable "application_name" {
   type = string
 }
@@ -17,6 +22,24 @@ variable "application_ports" {
 
 variable "application_env" {
   type    = map(string)
+  default = {}
+}
+
+variable "application_network" {
+  type    = string
+  default = null
+}
+
+variable "application_volumes" {
+  type    = list(string)
+  default = []
+}
+
+variable "application_configs" {
+  type = map(object({
+    path    = string
+    content = string
+  }))
   default = {}
 }
 
