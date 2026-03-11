@@ -70,6 +70,29 @@ module "computing" {
 }
 ```
 
+### example for deploying external Docker image with specific image tag using deployment submodule:
+
+```
+
+module "deployment" {
+  source              = "dashdevs/single-service/aws//modules/deployment"
+  deployment_document = "MyDeploymentDocument"
+  docker_image        = "my-docker-image"
+  docker_image_tag    = "my-docker-image-tag"
+  application_name    = "my-application"
+  application_env = {
+    ENV_VAR1 = "value1"
+    ENV_VAR2 = "value2"
+  }
+  application_volumes = ["/data:/data"]
+  target_ref          = "my-ec2-instance-id"
+}
+
+```
+
+> **Note:** `docker_image_tag` is only available when using the deployment submodule directly.
+> When using the root module (`dashdevs/single-service/aws`) the image tag defaults to `latest`.
+
 <!-- markdownlint-restore -->
 <!-- markdownlint-disable -->
 ## Requirements
