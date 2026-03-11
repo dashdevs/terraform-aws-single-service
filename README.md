@@ -70,29 +70,6 @@ module "computing" {
 }
 ```
 
-### example for deploying external Docker image with specific image tag using deployment submodule:
-
-```
-
-module "deployment" {
-  source              = "dashdevs/single-service/aws//modules/deployment"
-  deployment_document = "MyDeploymentDocument"
-  docker_image        = "my-docker-image"
-  docker_image_tag    = "my-docker-image-tag"
-  application_name    = "my-application"
-  application_env = {
-    ENV_VAR1 = "value1"
-    ENV_VAR2 = "value2"
-  }
-  application_volumes = ["/data:/data"]
-  target_ref          = "my-ec2-instance-id"
-}
-
-```
-
-> **Note:** `docker_image_tag` is only available when using the deployment submodule directly.
-> When using the root module (`dashdevs/single-service/aws`) the image tag defaults to `latest`.
-
 <!-- markdownlint-restore -->
 <!-- markdownlint-disable -->
 ## Requirements
@@ -126,7 +103,7 @@ module "deployment" {
 | <a name="input_target_group_arns"></a> [target\_group\_arns](#input\_target\_group\_arns) | Loadbalancer target group ARN list. Used for attach EC2 instance to loadbalancer, if `create_autoscaling` is `false` | `list(string)` |`[]`| no |
 | <a name="input_ec2_instance_name_postfix"></a> [ec2\_instance\_name\_postfix](#input\_ec2\_instance\_name\_postfix) | A primary keyword of the instance name. The resulting instance name will consist of name prefix and instance name postfix. | `string` |`server`| no |
 | <a name="input_ec2_ingress_ports"></a> [ec2\_ingress\_ports](#input\_ec2\_ingress\_ports) | The list of ports that are allowed for incoming traffic to an EC2 instance | `list(string)` |`["80", "22"]`| no |
-| <a name="input_applications_config"></a> [applications\_config](#input\_applications\_config) | Applications configuration map for application name, ports, start command, and environment variables. | `map(object({ flags = optional(string, null), ports = optional(string, null), env = optional(map(string), {}), cmd = optional(string, null), network = optional(string, null), volumes = optional(list(string), []), configs = optional(map(object({ path = string, content = string })), {}) }))` | `{"core": { "ports": "80:8080" }}` | no |
+| <a name="input_applications_config"></a> [applications\_config](#input\_applications\_config) | Applications configuration map for application name, ports, start command, and environment variables. | `map(object({ flags = optional(string, null), ports = optional(string, null), env = optional(map(string), {}), cmd = optional(string, null), network = optional(string, null), volumes = optional(list(string), []), tag = optional(string, "latest"), configs = optional(map(object({ path = string, content = string })), {}) }))` | `{"core": { "ports": "80:8080" }}` | no |
 
 
 ## Outputs
