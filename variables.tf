@@ -73,6 +73,7 @@ variable "applications_config" {
     cmd     = optional(string, null)
     network = optional(string, null)
     volumes = optional(list(string), [])
+    tag     = optional(string, "latest")
     configs = optional(map(object({
       path    = string
       content = string

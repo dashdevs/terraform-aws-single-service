@@ -26,6 +26,7 @@ resource "aws_ssm_association" "deployment" {
 
   parameters = {
     image   = var.docker_image
+    tag     = var.docker_image_tag
     name    = var.application_name
     flags   = var.docker_run_flags
     files   = local.config_files
