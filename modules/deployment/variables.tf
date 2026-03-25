@@ -6,6 +6,11 @@ variable "docker_image" {
   type = string
 }
 
+variable "docker_image_tag" {
+  type    = string
+  default = "latest"
+}
+
 variable "docker_run_flags" {
   type    = string
   default = null

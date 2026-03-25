@@ -3,6 +3,9 @@ description: Docker Deployment
 parameters:
   image:
     type: String
+  tag:
+    type: String
+    default: latest
   name:
     type: String
   flags:
@@ -80,7 +83,7 @@ mainSteps:
 
           docker rm -f {{name}} 2>/dev/null || true
           docker image prune -a --force
-          docker image pull {{image}}:latest
+          docker image pull {{image}}:{{tag}}
 
           docker run -d {{flags}} {{ports}} {{env}} {{volumes}} $docker_args \
-            --name {{name}} {{image}}:latest {{cmd}}
+            --name {{name}} {{image}}:{{tag}} {{cmd}}

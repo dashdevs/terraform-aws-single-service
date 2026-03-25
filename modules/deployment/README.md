@@ -11,6 +11,7 @@ module "deployment" {
   source              = "dashdevs/single-service/aws//modules/deployment"
   deployment_document = "MyDeploymentDocument"
   docker_image        = "my-docker-image"
+  docker_image_tag    = "1.0.0"
   docker_run_flags    = "--rm"
   application_name    = "my-application"
   application_ports   = "8080:80 9090:90"
@@ -50,6 +51,7 @@ module "deployment" {
 |------|-------------|------|---------|:--------:|
 | <a name="input_deployment_document"></a> [deployment\_document](#input\_deployment\_document) | Name of the SSM document (command) that performs the deployment. The document must define parameters for `image`, `name`, `flags`, `files`, `ports`, `env`, `network`, `volumes`, and `cmd` to configure Docker-based deployments | `string` | n/a | yes |
 | <a name="input_docker_image"></a> [docker\_image](#input\_docker\_image) | Docker image to deploy | `string` | n/a | yes |
+| <a name="input_docker_image_tag"></a> [docker\_image\_tag](#input\_docker\_image) | Docker image tag to deploy. If not specified, 'latest' will be used | `string` | `latest` | no |
 | <a name="input_docker_run_flags"></a> [docker\_run\_flags](#input\_docker\_run\_flags) | Additional flags to be passed to docker run (e.g., `--rm`, `--restart always`). If null, the default `--restart unless-stopped` will be used | `string` | `null` | no |
 | <a name="input_application_name"></a> [application\_name](#input\_application\_name) | Name of the application being deployed | `string` | n/a | yes |
 | <a name="input_application_ports"></a> [application\_ports](#input\_application\_ports) | Ports to expose for the application, specified in the format host_port:container_port (e.g., `8080:80 9090:90`) | `string` | `null` | no |
