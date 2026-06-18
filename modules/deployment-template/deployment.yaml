@@ -82,7 +82,7 @@ mainSteps:
           ${login_command}
 
           docker rm -f {{name}} 2>/dev/null || true
-          docker image prune -a --force
+          docker image prune -a --force > /dev/null 2>&1 || true
           docker image pull {{image}}:{{tag}}
 
           docker run -d {{flags}} {{ports}} {{env}} {{volumes}} $docker_args \
