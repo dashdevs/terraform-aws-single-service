@@ -64,3 +64,33 @@ variable "ec2_ingress_ports" {
   type    = list(string)
   default = ["80", "22"]
 }
+
+variable "ec2_ami_id" {
+  type    = string
+  default = null
+}
+
+variable "ec2_user_data" {
+  type    = string
+  default = null
+}
+
+variable "ec2_ingress_port_restrictions" {
+  type = map(object({
+    cidr_blocks     = optional(list(string))
+    prefix_list_ids = optional(list(string))
+  }))
+  default = {}
+
+  validation {
+    condition = alltrue([
+      for restriction in var.ec2_ingress_port_restrictions : restriction.cidr_blocks != null || restriction.prefix_list_ids != null
+    ])
+    error_message = "each ec2_ingress_port_restrictions entry must set cidr_blocks or prefix_list_ids."
+  }
+}
+
+variable "ec2_apply_docker_config" {
+  type    = bool
+  default = true
+}
