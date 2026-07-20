@@ -72,6 +72,10 @@ module "autoscaling_group" {
 | <a name="input_target_group_arns"></a> [target\_group\_arns](#input\_target\_group\_arns) | Loadbalancer target group ARN list. Used for attach EC2 instance to loadbalancer, if `create_autoscaling` is `false` | `list(string)` |`[]`| no |
 | <a name="input_ec2_instance_name_postfix"></a> [ec2\_instance\_name\_postfix](#input\_ec2\_instance\_name\_postfix) | A primary keyword of the instance name. The resulting instance name will consist of name prefix and instance name postfix. | `string` |`server`| no |
 | <a name="input_ec2_ingress_ports"></a> [ec2\_ingress\_ports](#input\_ec2\_ingress\_ports) | The list of ports that are allowed for incoming traffic to an EC2 instance | `list(string)` |`["80", "22"]`| no |
+| <a name="input_ec2_ami_id"></a> [ec2\_ami\_id](#input\_ec2\_ami\_id) | AMI identifier to use for EC2 instances. If not set, the latest Amazon Linux 2 AMI will be used | `string` |`null`| no |
+| <a name="input_ec2_user_data"></a> [ec2\_user\_data](#input\_ec2\_user\_data) | User data script for EC2 instances, e.g. to join an ECS cluster | `string` |`null`| no |
+| <a name="input_ec2_ingress_port_restrictions"></a> [ec2\_ingress\_port\_restrictions](#input\_ec2\_ingress\_port\_restrictions) | Map of ingress port to allowed traffic sources for that port, e.g. `{ "80" = { prefix_list_ids = ["pl-12345678"] } }`. Each entry must set `cidr_blocks` and/or `prefix_list_ids`. Ports not present in the map are open to `0.0.0.0/0` | `map(object({ cidr_blocks = optional(list(string)), prefix_list_ids = optional(list(string)) }))` |`{}`| no |
+| <a name="input_ec2_apply_docker_config"></a> [ec2\_apply\_docker\_config](#input\_ec2\_apply\_docker\_config) | If `true`, will apply the SSM document that installs and configures Docker on EC2 instances. Set to `false` for AMIs that manage Docker themselves, e.g. ECS-optimized AMIs | `bool` |`true`| no |
 
 
 ## Outputs

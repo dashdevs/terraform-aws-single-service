@@ -12,6 +12,7 @@ locals {
 }
 
 data "aws_ami" "amazon-linux-2" {
+  count       = var.ec2_ami_id == null ? 1 : 0
   most_recent = true
   owners      = ["amazon"]
   filter {
@@ -53,12 +54,13 @@ resource "aws_iam_instance_profile" "ec2" {
 
 resource "aws_instance" "ec2" {
   count                       = var.create_autoscaling ? 0 : 1
-  ami                         = data.aws_ami.amazon-linux-2.id
+  ami                         = var.ec2_ami_id == null ? data.aws_ami.amazon-linux-2[0].id : var.ec2_ami_id
   associate_public_ip_address = var.ec2_create_eip
   iam_instance_profile        = aws_iam_instance_profile.ec2.id
   instance_type               = var.ec2_instance_type
   key_name                    = aws_key_pair.ec2.key_name
   subnet_id                   = var.ec2_subnets[0]
+  user_data                   = var.ec2_user_data
   vpc_security_group_ids      = [aws_security_group.ec2.id]
 
   tags = {
@@ -77,11 +79,12 @@ resource "aws_instance" "ec2" {
 resource "aws_launch_configuration" "core_conf" {
   count                = var.create_autoscaling ? 1 : 0
   name_prefix          = "${var.name}-lc"
-  image_id             = data.aws_ami.amazon-linux-2.id
+  image_id             = var.ec2_ami_id == null ? data.aws_ami.amazon-linux-2[0].id : var.ec2_ami_id
   iam_instance_profile = aws_iam_instance_profile.ec2.id
   instance_type        = var.ec2_instance_type
   key_name             = aws_key_pair.ec2.key_name
   security_groups      = [aws_security_group.ec2.id]
+  user_data            = var.ec2_user_data
 
   root_block_device {
     volume_size = var.ec2_root_storage_size
@@ -134,10 +137,11 @@ resource "aws_security_group" "ec2" {
   dynamic "ingress" {
     for_each = toset(var.ec2_ingress_ports)
     content {
-      from_port   = ingress.value
-      to_port     = ingress.value
-      cidr_blocks = ["0.0.0.0/0"]
-      protocol    = "tcp"
+      from_port       = ingress.value
+      to_port         = ingress.value
+      cidr_blocks     = try(var.ec2_ingress_port_restrictions[ingress.value].cidr_blocks, ["0.0.0.0/0"])
+      prefix_list_ids = try(var.ec2_ingress_port_restrictions[ingress.value].prefix_list_ids, null)
+      protocol        = "tcp"
     }
   }
 
@@ -150,6 +154,7 @@ resource "aws_security_group" "ec2" {
 }
 
 resource "aws_ssm_document" "ec2_config" {
+  count           = var.ec2_apply_docker_config ? 1 : 0
   name            = "${var.name}-${var.ec2_instance_name_postfix}-ec2-config"
   document_format = "YAML"
   document_type   = "Command"
@@ -158,7 +163,8 @@ resource "aws_ssm_document" "ec2_config" {
 }
 
 resource "aws_ssm_association" "ec2_config" {
-  name = aws_ssm_document.ec2_config.name
+  count = var.ec2_apply_docker_config ? 1 : 0
+  name  = aws_ssm_document.ec2_config[0].name
   targets {
     key    = "tag:Name"
     values = [local.instance_name_tag]
