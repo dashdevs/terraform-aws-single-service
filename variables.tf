@@ -78,6 +78,14 @@ variable "applications_config" {
       path    = string
       content = string
     })), {})
+    additional_containers = optional(map(object({
+      cmd     = string
+      flags   = optional(string, null)
+      ports   = optional(string, null)
+      env     = optional(map(string), {})
+      network = optional(string, null)
+      volumes = optional(list(string), [])
+    })), {})
   }))
   default = { core = { ports = "80:8080" } }
 }
