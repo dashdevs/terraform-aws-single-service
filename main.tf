@@ -56,7 +56,7 @@ module "deployment" {
   for_each            = local.deployments
   source              = "./modules/deployment"
   deployment_document = module.deployment_template.ssm_document_name
-  docker_image        = module.container_registry.application_repositories[each.value.image_key].url
+  docker_image        = each.value.image
   docker_image_tag    = each.value.tag
   application_name    = each.key
   docker_run_flags    = each.value.flags
