@@ -1,30 +1,22 @@
 locals {
   deployments = merge(
     {
-      for name, cfg in var.applications_config : name => {
-        image_key = name
-        tag       = cfg.tag
-        flags     = cfg.flags
-        ports     = cfg.ports
-        env       = cfg.env
-        cmd       = cfg.cmd
-        network   = cfg.network
-        volumes   = cfg.volumes
-        configs   = cfg.configs
-      }
+      for name, cfg in var.applications_config : name => merge(cfg, {
+        image = module.container_registry.application_repositories[name].url
+      })
     },
     merge([
       for name, cfg in var.applications_config : {
         for cname, c in cfg.additional_containers : "${name}-${cname}" => {
-          image_key = name
-          tag       = cfg.tag
-          flags     = c.flags
-          ports     = c.ports
-          env       = merge(cfg.env, c.env)
-          cmd       = c.cmd
-          network   = c.network != null ? c.network : cfg.network
-          volumes   = c.volumes
-          configs   = {}
+          image   = module.container_registry.application_repositories[name].url
+          tag     = cfg.tag
+          flags   = c.flags
+          ports   = c.ports
+          env     = c.env
+          cmd     = c.cmd
+          network = c.network == null ? cfg.network : c.network
+          volumes = c.volumes
+          configs = c.configs
         }
       }
     ]...)

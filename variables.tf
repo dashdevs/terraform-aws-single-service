@@ -85,6 +85,10 @@ variable "applications_config" {
       env     = optional(map(string), {})
       network = optional(string, null)
       volumes = optional(list(string), [])
+      configs = optional(map(object({
+        path    = string
+        content = string
+      })), {})
     })), {})
   }))
   default = { core = { ports = "80:8080" } }
