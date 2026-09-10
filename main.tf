@@ -7,17 +7,12 @@ locals {
     },
     merge([
       for name, cfg in var.applications_config : {
-        for cname, c in cfg.additional_containers : "${name}-${cname}" => {
+        for cname, c in cfg.additional_containers : "${name}-${cname}" => merge(c, {
           image   = module.container_registry.application_repositories[name].url
           tag     = cfg.tag
-          flags   = c.flags
-          ports   = c.ports
-          env     = c.env
-          cmd     = c.cmd
           network = c.network == null ? cfg.network : c.network
-          volumes = c.volumes
-          configs = c.configs
-        }
+          env     = c.env
+        })
       }
     ]...)
   )
@@ -76,10 +71,15 @@ module "automations" {
 }
 
 module "deployment_events" {
-  for_each                    = local.deployments
-  source                      = "./modules/deployment-events"
-  name                        = "${var.name}-${each.key}"
-  deployment_association_id   = module.deployment[each.key].ssm_association_id
+  for_each = var.applications_config
+  source   = "./modules/deployment-events"
+  name     = "${var.name}-${each.key}"
+  deployment_association_ids = concat(
+    [module.deployment[each.key].ssm_association_id],
+    [for cname in keys(each.value.additional_containers) :
+    module.deployment["${each.key}-${cname}"].ssm_association_id]
+  )
   deployment_run_document_arn = module.automations.association_start_document_arn
-  repository_name             = module.container_registry.application_repositories[each.value.image_key].name
+  repository_name             = module.container_registry.application_repositories[each.key].name
+  image_tag                   = each.value.tag
 }
