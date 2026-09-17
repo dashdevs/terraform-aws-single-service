@@ -69,5 +69,4 @@ resource "aws_cloudwatch_event_target" "ecr_push_deployment_run" {
   arn      = var.deployment_run_document_arn
   input    = jsonencode({ associationIds = var.deployment_association_ids })
   role_arn = aws_iam_role.deployment_runner.arn
-
 }
