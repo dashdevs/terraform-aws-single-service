@@ -1,3 +1,23 @@
+locals {
+  deployments = merge(
+    {
+      for name, cfg in var.applications_config : name => merge(cfg, {
+        image = module.container_registry.application_repositories[name].url
+      })
+    },
+    merge([
+      for name, cfg in var.applications_config : {
+        for cname, c in cfg.additional_containers : "${name}-${cname}" => merge(c, {
+          image   = module.container_registry.application_repositories[name].url
+          tag     = cfg.tag
+          network = c.network == null ? cfg.network : c.network
+          env     = c.env
+        })
+      }
+    ]...)
+  )
+}
+
 module "container_registry" {
   source            = "./modules/container-registry"
   name              = var.name
@@ -28,19 +48,19 @@ module "deployment_template" {
 }
 
 module "deployment" {
-  for_each            = module.container_registry.application_repositories
+  for_each            = local.deployments
   source              = "./modules/deployment"
   deployment_document = module.deployment_template.ssm_document_name
-  docker_image        = each.value.url
-  docker_image_tag    = var.applications_config[each.key].tag
+  docker_image        = each.value.image
+  docker_image_tag    = each.value.tag
   application_name    = each.key
-  docker_run_flags    = var.applications_config[each.key].flags
-  application_ports   = var.applications_config[each.key].ports
-  application_env     = var.applications_config[each.key].env
-  application_cmd     = var.applications_config[each.key].cmd
-  application_network = var.applications_config[each.key].network
-  application_volumes = var.applications_config[each.key].volumes
-  application_configs = var.applications_config[each.key].configs
+  docker_run_flags    = each.value.flags
+  application_ports   = each.value.ports
+  application_env     = each.value.env
+  application_cmd     = each.value.cmd
+  application_network = each.value.network
+  application_volumes = each.value.volumes
+  application_configs = each.value.configs
   target_type         = var.create_autoscaling ? "autoscaling_group_name" : "instance_id"
   target_ref          = var.create_autoscaling ? module.computing.autoscaling_group : module.computing.ec2_instance_id
 }
@@ -51,10 +71,15 @@ module "automations" {
 }
 
 module "deployment_events" {
-  for_each                    = module.container_registry.application_repositories
-  source                      = "./modules/deployment-events"
-  name                        = "${var.name}-${each.key}"
-  deployment_association_id   = module.deployment[each.key].ssm_association_id
+  for_each = var.applications_config
+  source   = "./modules/deployment-events"
+  name     = "${var.name}-${each.key}"
+  deployment_association_ids = concat(
+    [module.deployment[each.key].ssm_association_id],
+    [for cname in keys(each.value.additional_containers) :
+    module.deployment["${each.key}-${cname}"].ssm_association_id]
+  )
   deployment_run_document_arn = module.automations.association_start_document_arn
-  repository_name             = each.value.name
+  repository_name             = module.container_registry.application_repositories[each.key].name
+  image_tag                   = each.value.tag
 }
