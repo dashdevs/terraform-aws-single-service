@@ -65,6 +65,13 @@ module "computing" {
           content = jsonencode({ key = "value" })
         }
       }
+      additional_containers = {
+        worker = {
+          cmd     = var.worker_cmd
+          flags   = var.worker_flags
+          network = var.app_network
+        }
+      }
     }
   }
 }
