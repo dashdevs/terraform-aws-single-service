@@ -33,6 +33,13 @@ data "aws_iam_policy_document" "deployment_runner_permissions" {
 resource "aws_iam_role" "deployment_runner" {
   name               = "${var.name}-deployment-runner"
   assume_role_policy = data.aws_iam_policy_document.deployment_runner_trust.json
+
+  lifecycle {
+    precondition {
+      condition     = length("${var.name}-deployment-runner") <= 64
+      error_message = "IAM role name \"${var.name}-deployment-runner\" exceeds the 64-character limit. Shorten the module name or application name."
+    }
+  }
 }
 
 resource "aws_iam_policy" "deployment_runner" {
