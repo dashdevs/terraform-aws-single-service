@@ -1,8 +1,8 @@
 schemaVersion: "0.3"
 description: Start Association
 parameters:
-  associationId:
-    type: String
+  associationIds:
+    type: StringList
 mainSteps:
   - name: StartAssociationsOnce
     action: aws:executeAwsApi
@@ -10,5 +10,4 @@ mainSteps:
     inputs:
       Service: ssm
       Api: StartAssociationsOnce
-      AssociationIds:
-        - "{{ associationId }}"
+      AssociationIds: "{{ associationIds }}"
