@@ -67,9 +67,12 @@ module "computing" {
       }
       additional_containers = {
         worker = {
-          cmd     = var.worker_cmd
-          flags   = var.worker_flags
-          network = var.app_network
+          cmd     = "python worker.py"
+          flags   = "--memory=600m --cpus=0.4 --restart unless-stopped"
+          network = "demo-network"
+          env = {
+            worker_var_name = "worker_var_value"
+          }
         }
       }
     }
