@@ -73,6 +73,11 @@ mainSteps:
         - |
           set -euo pipefail
 
+          # Concurrent associations on one host race each other: `docker image prune -a`
+          # from one rollout can delete an image another rollout has pulled but not yet run.
+          exec 200>/var/lock/docker-deployment.lock
+          flock -w 600 200
+
           docker_args=""
           if [ -n "{{ network }}" ]; then
             docker network create "{{ network }}" 2>/dev/null || true
