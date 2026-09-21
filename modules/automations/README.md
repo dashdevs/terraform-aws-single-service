@@ -22,7 +22,7 @@ module "automations" {
 module "deployment_events" {
   source                      = "dashdevs/single-service/aws//modules/deployment-events"
   name                        = "my-project-core-app"
-  deployment_association_id   = module.deployment.ssm_association_id
+  deployment_association_ids  = [module.deployment.ssm_association_id]
   deployment_run_document_arn = module.automations.association_start_document_arn
   repository_name             = "my-project/core-app"
 }

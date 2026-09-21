@@ -78,6 +78,33 @@ variable "applications_config" {
       path    = string
       content = string
     })), {})
+    additional_containers = optional(map(object({
+      cmd     = string
+      flags   = optional(string, null)
+      ports   = optional(string, null)
+      env     = optional(map(string), {})
+      network = optional(string, null)
+      volumes = optional(list(string), [])
+      configs = optional(map(object({
+        path    = string
+        content = string
+      })), {})
+    })), {})
   }))
   default = { core = { ports = "80:8080" } }
+
+  validation {
+    condition = (
+      length(distinct(flatten([
+        for name, cfg in var.applications_config : concat(
+          [name], [for cname in keys(cfg.additional_containers) : "${name}-${cname}"]
+        )
+      ])))
+      ==
+      length(var.applications_config) + length(flatten([
+        for cfg in values(var.applications_config) : keys(cfg.additional_containers)
+      ]))
+    )
+    error_message = "Deployment names must be unique: every application name and every \"<application>-<additional container>\" combination share one namespace. Rename the colliding application or additional container."
+  }
 }

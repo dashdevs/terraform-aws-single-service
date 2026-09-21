@@ -21,8 +21,8 @@ data "aws_iam_policy_document" "deployment_runner_permissions" {
   }
   statement {
     actions = ["ssm:StartAssociationsOnce"]
-    resources = [
-      "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:association/${var.deployment_association_id}"
+    resources = [for id in var.deployment_association_ids :
+      "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:association/${id}"
     ]
   }
 }
@@ -33,6 +33,13 @@ data "aws_iam_policy_document" "deployment_runner_permissions" {
 resource "aws_iam_role" "deployment_runner" {
   name               = "${var.name}-deployment-runner"
   assume_role_policy = data.aws_iam_policy_document.deployment_runner_trust.json
+
+  lifecycle {
+    precondition {
+      condition     = length("${var.name}-deployment-runner") <= 64
+      error_message = "IAM role name \"${var.name}-deployment-runner\" exceeds the 64-character limit. Shorten the module name or application name."
+    }
+  }
 }
 
 resource "aws_iam_policy" "deployment_runner" {
@@ -59,7 +66,7 @@ resource "aws_cloudwatch_event_rule" "ecr_push" {
       action-type     = ["PUSH"]
       result          = ["SUCCESS"]
       repository-name = ["${var.repository_name}"]
-      image-tag       = ["latest"]
+      image-tag       = [var.image_tag]
     }
   })
 }
@@ -67,6 +74,6 @@ resource "aws_cloudwatch_event_rule" "ecr_push" {
 resource "aws_cloudwatch_event_target" "ecr_push_deployment_run" {
   rule     = aws_cloudwatch_event_rule.ecr_push.name
   arn      = var.deployment_run_document_arn
-  input    = jsonencode({ associationId = [var.deployment_association_id] })
+  input    = jsonencode({ associationIds = var.deployment_association_ids })
   role_arn = aws_iam_role.deployment_runner.arn
 }

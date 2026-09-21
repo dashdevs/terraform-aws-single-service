@@ -27,9 +27,10 @@ module "deployment" {
 module "deployment_events" {
   source                      = "dashdevs/single-service/aws//modules/deployment-events"
   name                        = "my-project-core-app"
-  deployment_association_id   = module.deployment.ssm_association_id
+  deployment_association_ids  = [module.deployment.ssm_association_id]
   deployment_run_document_arn = module.automations.association_start_document_arn
   repository_name             = "my-project/core-app"
+  image_tag                   = "latest"
 }
 ```
 
@@ -53,7 +54,8 @@ module "deployment_events" {
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_name"></a> [name](#input\_name) | Prefix for naming the deployment-related resources | `string` | n/a | yes |
-| <a name="input_deployment_association_id"></a> [deployment\_association\_id](#input\_deployment\_association\_id) | ID of the SSM association to be triggered by the event rules | `string` | n/a | yes |
+| <a name="input_deployment_association_ids"></a> [deployment\_association\_ids](#input\_deployment\_association\_ids) | List of SSM association IDs to be triggered by the event rules | `list(string)` | n/a | yes |
+| <a name="input_image_tag"></a> [image\_tag](#input\_image\_tag) | Docker image tag to filter ECR push events | `string` | `latest` | no |
 | <a name="input_deployment_run_document_arn"></a> [deployment\_run\_document\_arn](#input\_deployment\_run\_document\_arn) | ARN of the SSM document that triggers the deployment automation, specifically to start SSM associations | `string` | n/a | yes |
 | <a name="input_repository_name"></a> [repository\_name](#input\_repository\_name) | Name of the repository whose events trigger the deployment rules | `string` | n/a | yes |
 
