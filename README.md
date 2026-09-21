@@ -65,6 +65,37 @@ module "computing" {
           content = jsonencode({ key = "value" })
         }
       }
+    }
+  }
+}
+```
+
+### example with additional containers:
+
+Each entry of `additional_containers` runs an extra container from the parent
+application's image (for example a worker or scheduler process). The deployment is
+named `<application>-<container>`.
+
+Additional containers inherit the parent application's image and `tag`, and join the
+parent's `network` unless they set their own (use `network = ""` to run without
+one). All other settings are declared explicitly per container: `flags`, `ports`,
+`env`, `cmd`, `volumes`, and `configs`. To share environment variables between the
+parent and its containers, declare them once in your own configuration (for example
+in a local) and reference them in both `env` maps.
+
+```
+module "computing" {
+  source      = "dashdevs/single-service/aws"
+  name        = var.name_prefix
+  vpc_id      = var.vpc_id
+  ec2_subnets = var.subnets
+
+  applications_config = {
+    core = {
+      ports = "80:8080"
+      env = {
+        example_var_name = "example_var_value"
+      }
       additional_containers = {
         worker = {
           cmd     = "python worker.py"
@@ -113,7 +144,7 @@ module "computing" {
 | <a name="input_target_group_arns"></a> [target\_group\_arns](#input\_target\_group\_arns) | Loadbalancer target group ARN list. Used for attach EC2 instance to loadbalancer, if `create_autoscaling` is `false` | `list(string)` |`[]`| no |
 | <a name="input_ec2_instance_name_postfix"></a> [ec2\_instance\_name\_postfix](#input\_ec2\_instance\_name\_postfix) | A primary keyword of the instance name. The resulting instance name will consist of name prefix and instance name postfix. | `string` |`server`| no |
 | <a name="input_ec2_ingress_ports"></a> [ec2\_ingress\_ports](#input\_ec2\_ingress\_ports) | The list of ports that are allowed for incoming traffic to an EC2 instance | `list(string)` |`["80", "22"]`| no |
-| <a name="input_applications_config"></a> [applications\_config](#input\_applications\_config) | Applications configuration map for application name, ports, start command, and environment variables. | `map(object({ flags = optional(string, null), ports = optional(string, null), env = optional(map(string), {}), cmd = optional(string, null), network = optional(string, null), volumes = optional(list(string), []), tag = optional(string, "latest"), configs = optional(map(object({ path = string, content = string })), {}), additional_containers = optional(map(object({ cmd = string, flags = optional(string, null), ports = optional(string, null), env = optional(map(string), {}), network = optional(string, null), volumes = optional(list(string), []), configs = optional(map(object({ path = string, content = string })), {}) })), {}) }))` | `{"core": { "ports": "80:8080" }}` | no |
+| <a name="input_applications_config"></a> [applications\_config](#input\_applications\_config) | Applications configuration map for application name, ports, start command, environment variables, and additional containers started from the same image. | `map(object({ flags = optional(string, null), ports = optional(string, null), env = optional(map(string), {}), cmd = optional(string, null), network = optional(string, null), volumes = optional(list(string), []), tag = optional(string, "latest"), configs = optional(map(object({ path = string, content = string })), {}), additional_containers = optional(map(object({ cmd = string, flags = optional(string, null), ports = optional(string, null), env = optional(map(string), {}), network = optional(string, null), volumes = optional(list(string), []), configs = optional(map(object({ path = string, content = string })), {}) })), {}) }))` | `{"core": { "ports": "80:8080" }}` | no |
 
 
 ## Outputs
